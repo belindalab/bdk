@@ -201,6 +201,26 @@
             transform: translateX(3px);
         }
 
+        .sort-header::after {
+            content: ' ↕';
+            font-size: 0.9em;
+            opacity: 0.5;
+            margin-left: 4px;
+        }
+
+        .sort-header.sort-asc::after {
+            content: ' ↑';
+            opacity: 1;
+            color: var(--primary-red);
+        }
+
+        .sort-header.sort-desc::after {
+            content: ' ↓';
+            opacity: 1;
+            color: var(--primary-red);
+        }
+
+
         .table-row {
             position: relative;
             border-bottom: 1px solid #f0f0f0;
@@ -738,18 +758,29 @@
 
                 <div class="table-container fade-in">
             <table class="min-w-full">
-                        <thead class="table-header" style="display: none;">
+                        <thead class="table-header">
                             <tr class="text-[11px] font-black uppercase tracking-widest" style="color: var(--primary-dark);">
                                 <th class="p-5 text-center border-r border-gray-300 w-16">№</th>
-                                <th class="p-5 sort-header text-left border-r border-gray-300" onclick="sortBy('name')">Врач ↕</th>
-                                <th class="p-5 sort-header text-left border-r border-gray-300" onclick="sortBy('lpu')">Регион / ЛПУ ↕</th>
-                                <th class="p-5 text-center border-r border-gray-300">Статус</th>
-                                <th class="p-5 text-left border-r border-gray-300">Распределение Групп</th>
-                                <th class="p-5 sort-header text-right border-r border-gray-300" onclick="sortBy('ourSum')">Гр. 1 (Σ) ↕</th>
-                                <th class="p-5 sort-header text-right" onclick="sortBy('total')">Общий Итог ↕</th>
+                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="name" onclick="sortBy('name')">ФИО ВРАЧА</th>
+                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="spec" onclick="sortBy('spec')">СПЕЦИАЛЬНОСТЬ</th>
+                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="lpu" onclick="sortBy('lpu')">ЛПУ</th>
+                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="region" onclick="sortBy('region')">ОБЛАСТЬ</th>
+                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="status" onclick="sortBy('status')">СТАТУС</th>
+                                <th class="p-5 text-center border-r border-gray-300">РАСПРЕДЕЛЕНИЕ ГРУПП</th>
+                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="g1Sum" onclick="sortBy('g1Sum')">СУММА ГРУППЫ №1</th>
+                                <th class="p-5 sort-header text-center" data-sort="g2Sum" onclick="sortBy('g2Sum')">СУММА ГРУППЫ №2</th>
                     </tr>
                         </thead>
-                        <tbody id="resultTable" class="divide-y divide-gray-100 text-sm"></tbody>
+                        <tbody id="resultTable" class="divide-y divide-gray-100 text-sm">
+                            <tr id="loadingIndicator" style="display: none;">
+                                <td colspan="9" class="p-10 text-center">
+                                    <div class="inline-block">
+                                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                                        <p class="text-sm font-medium" style="color: var(--primary-dark);">Загрузка данных...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
             </table>
                 </div>
             </div>
@@ -769,8 +800,8 @@
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwZGelpJ-PgQ4AFO5wSUQDj45KiuhJ-6py-fm-ek-XknGnAWvDv1_-8nl1Oy9ShFaD0Gg/exec';
         let rawData = [];
         let analyzedData = [];
-        let currentSort = { key: 'total', dir: -1 };
         let allGroups = [];
+        let currentSort = { key: 'g1Sum', dir: -1 };
 
         // Number counter animation
         function animateValue(element, start, end, duration) {
@@ -848,8 +879,31 @@
         }
 
         async function init() {
-            const resp = await fetch(WEB_APP_URL);
-            rawData = await resp.json();
+            // Показываем индикатор загрузки при первой загрузке данных
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = '';
+            }
+            
+            try {
+                const resp = await fetch(WEB_APP_URL);
+                rawData = await resp.json();
+                
+                // Скрываем индикатор после загрузки
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                const tbody = document.getElementById('resultTable');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="p-10 text-center text-red-600">Ошибка загрузки данных. Пожалуйста, обновите страницу.</td></tr>';
+                }
+                return;
+            }
             allGroups = [...new Set(rawData.map(r => r['Группа']))].filter(g => g).sort();
             
             // Создаем выпадающие списки для групп
@@ -964,6 +1018,16 @@
         }
 
         function processData() {
+            // Показываем индикатор загрузки
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const tbody = document.getElementById('resultTable');
+            if (loadingIndicator && tbody) {
+                loadingIndicator.style.display = '';
+                // Очищаем таблицу, но оставляем индикатор
+                const existingRows = tbody.querySelectorAll('tr:not(#loadingIndicator)');
+                existingRows.forEach(row => row.remove());
+            }
+
             const g1 = Array.from(document.getElementById('mainGroup').selectedOptions).map(o => o.value);
             const g2 = Array.from(document.getElementById('donorGroups').selectedOptions).map(o => o.value);
             const filtered = {};
@@ -986,10 +1050,18 @@
                     const region = row['H'] || row['Область'] || ''; // Область из столбца H
                     const lpuDisplay = lpuCode ? `${lpuName} (${lpuCode})` : lpuName;
                     filtered[name] = { 
-                        name, spec: row['Специальность'], 
-                        lpu: region ? `${region}, ${lpuDisplay}` : lpuDisplay,
-                        lpuName: lpuName, lpuCode: lpuCode, region: region,
-                        ourSum: 0, total: 0, existsInOur: false, history: [], groupSums: {} 
+                        name, 
+                        spec: row['Специальность'] || 'Не указано', 
+                        lpuName: lpuName,
+                        lpuCode: lpuCode,
+                        lpu: lpuCode ? `${lpuName} (${lpuCode})` : lpuName,
+                        region: region || '',
+                        ourSum: 0,      // Сумма группы 1
+                        otherSum: 0,    // Сумма группы 2 (остальные группы)
+                        total: 0, 
+                        existsInOur: false, 
+                        history: [], 
+                        groupSums: {} 
                     };
                 }
 
@@ -997,7 +1069,13 @@
                     if (sum > 0) {
                         filtered[name].history.push({ month, group, sum, isG1: g1.includes(group) });
                         filtered[name].groupSums[group] = (filtered[name].groupSums[group] || 0) + sum;
-                        if (g1.includes(group)) { filtered[name].ourSum += sum; filtered[name].existsInOur = true; }
+                        if (g1.includes(group)) { 
+                            filtered[name].ourSum += sum; 
+                            filtered[name].existsInOur = true; 
+                        } else {
+                            // Сумма из других групп (не из группы 1)
+                            filtered[name].otherSum += sum;
+                        }
                         filtered[name].total += sum;
                         statsGroups[group] = (statsGroups[group] || 0) + sum;
                     }
@@ -1005,6 +1083,12 @@
             });
 
             analyzedData = Object.values(filtered).filter(d => d.total > 0);
+            
+            // Скрываем индикатор загрузки и обновляем таблицу
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
             updateDashboard(g1);
             renderStatistics(g1);
             render();
@@ -1268,70 +1352,111 @@
         function render() {
             const tbody = document.getElementById('resultTable');
             
-            // Добавляем среднюю сумму для каждого врача для сортировки
-            const dataWithAvg = analyzedData.map(doc => {
-                const monthCount = doc.history.length;
-                const avgSum = monthCount > 0 ? doc.total / monthCount : 0;
-                return { ...doc, avgTotal: avgSum };
+            // Сортируем данные в зависимости от выбранного столбца
+            const sorted = [...analyzedData].sort((a, b) => {
+                let vA, vB;
+                
+                switch(currentSort.key) {
+                    case 'name':
+                        vA = (a.name || '').toLowerCase();
+                        vB = (b.name || '').toLowerCase();
+                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                    case 'spec':
+                        vA = (a.spec || '').toLowerCase();
+                        vB = (b.spec || '').toLowerCase();
+                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                    case 'lpu':
+                        vA = (a.lpuName || '').toLowerCase();
+                        vB = (b.lpuName || '').toLowerCase();
+                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                    case 'region':
+                        vA = (a.region || '').toLowerCase();
+                        vB = (b.region || '').toLowerCase();
+                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                    case 'status':
+                        vA = a.existsInOur ? 1 : 0;
+                        vB = b.existsInOur ? 1 : 0;
+                        return (vA - vB) * currentSort.dir;
+                    case 'g1Sum':
+                        vA = a.ourSum || 0;
+                        vB = b.ourSum || 0;
+                        return (vA - vB) * currentSort.dir;
+                    case 'g2Sum':
+                        vA = a.otherSum || 0;
+                        vB = b.otherSum || 0;
+                        return (vA - vB) * currentSort.dir;
+                    default:
+                        return 0;
+                }
             });
             
-            const sorted = dataWithAvg.sort((a, b) => {
-                let vA = a[currentSort.key], vB = b[currentSort.key];
-                // Если ключ avgTotal, используем вычисленное значение
-                if (currentSort.key === 'avgTotal') {
-                    vA = a.avgTotal;
-                    vB = b.avgTotal;
+            // Обновляем визуальные индикаторы сортировки в заголовках
+            document.querySelectorAll('.sort-header').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                const sortKey = th.getAttribute('data-sort');
+                if (sortKey === currentSort.key) {
+                    th.classList.add(currentSort.dir === 1 ? 'sort-asc' : 'sort-desc');
                 }
-                return vA > vB ? currentSort.dir : vA < vB ? -currentSort.dir : 0;
             });
 
             // Вычисляем итоги и средние значения
-            const totalOurSum = sorted.reduce((sum, doc) => sum + doc.ourSum, 0);
-            const totalSum = sorted.reduce((sum, doc) => sum + doc.total, 0);
+            const totalG1Sum = sorted.reduce((sum, doc) => sum + doc.ourSum, 0);
+            const totalG2Sum = sorted.reduce((sum, doc) => sum + doc.otherSum, 0);
             const count = sorted.length;
-            const avgOurSum = count > 0 ? totalOurSum / count : 0;
-            const avgTotal = count > 0 ? totalSum / count : 0;
+            const avgG1Sum = count > 0 ? totalG1Sum / count : 0;
+            const avgG2Sum = count > 0 ? totalG2Sum / count : 0;
 
             let html = sorted.map((doc, i) => {
-                const pills = Object.entries(doc.groupSums).map(([g, s]) => `<span class="group-pill"><b>${g}:</b> ${s.toLocaleString()}</span>`).join('');
                 const historyRows = doc.history.sort((a,b)=>a.month>b.month?1:-1).map(h => `
                     <tr class="${h.isG1 ? 'bg-red-50' : ''} border-b border-gray-100">
                         <td class="p-3 pl-8">${h.month}</td>
                         <td class="p-3 font-bold ${h.isG1 ? 'text-red-600' : ''}" style="${h.isG1 ? 'color: var(--primary-red);' : ''}">${h.group}</td>
-                        <td class="p-3 text-right font-semibold">${h.sum.toLocaleString()}</td>
+                        <td class="p-3 text-right font-semibold">${h.sum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</td>
                     </tr>`).join('');
 
                 // Вычисляем средние суммы
-                const monthCount = doc.history.length;
                 const g1MonthCount = doc.history.filter(h => h.isG1).length;
-                const avgG1Sum = g1MonthCount > 0 ? doc.ourSum / g1MonthCount : 0;
-                const avgTotalSum = monthCount > 0 ? doc.total / monthCount : 0;
+                const g2MonthCount = doc.history.filter(h => !h.isG1).length;
+                const avgG1SumRow = g1MonthCount > 0 ? doc.ourSum / g1MonthCount : 0;
+                const avgG2SumRow = g2MonthCount > 0 ? doc.otherSum / g2MonthCount : 0;
 
+                // Правильный порядок столбцов: №, ФИО, Специальность, ЛПУ, Область, Статус, Распределение, Гр1, Гр2
+                // Исправленный вариант для точного соответствия макету
+                const lpuDisplay = doc.lpuCode ? `${doc.lpuName || ''} (${doc.lpuCode})` : (doc.lpuName || '');
+                
                 return `
                     <tr class="table-row cursor-pointer" onclick="document.getElementById('det-${i}').classList.toggle('open')">
                         <td class="p-5 text-center border-r border-gray-300 font-medium" style="color: var(--primary-dark);">${i + 1}</td>
                         <td class="p-5 text-left border-r border-gray-300">
-                            <div class="font-bold text-base" style="color: var(--primary-dark);">${doc.name}</div>
-                            <div class="text-xs mt-1" style="color: var(--primary-red);">${doc.spec}</div>
+                            <div class="font-bold text-base" style="color: var(--primary-dark);">${doc.name || ''}</div>
                         </td>
-                        <td class="p-5 text-left text-xs font-medium border-r border-gray-300" style="color: var(--dark-light);">${doc.lpu}</td>
+                        <td class="p-5 text-left border-r border-gray-300">
+                            <div class="text-sm font-medium" style="color: var(--primary-red);">${doc.spec || 'Не указано'}</div>
+                        </td>
+                        <td class="p-5 text-left text-xs font-medium border-r border-gray-300" style="color: var(--primary-dark);">${lpuDisplay}</td>
+                        <td class="p-5 text-left text-xs font-medium border-r border-gray-300" style="color: var(--primary-dark);">${doc.region || ''}</td>
                         <td class="p-5 text-center border-r border-gray-300">
                             <span class="status-tag ${doc.existsInOur ? 'status-exists' : 'status-missing'}">
                                 ${doc.existsInOur ? 'Гр 1 ✓' : 'НЕТ'}
                             </span>
                         </td>
-                        <td class="p-5 text-left w-64 leading-relaxed border-r border-gray-300">${pills}</td>
+                        <td class="p-5 text-left w-64 border-r border-gray-300" style="white-space: normal; line-height: 1.6;">
+                            ${Object.entries(doc.groupSums)
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([g, s]) => `<span class="group-pill"><b>${g}:</b> ${s.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</span>`)
+                                .join(' ')}
+                        </td>
                         <td class="p-5 text-right border-r border-gray-300">
-                            <div class="font-black text-lg" style="color: var(--primary-red);">${doc.ourSum.toLocaleString()}</div>
-                            ${g1MonthCount > 0 ? `<div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-red); opacity: 0.7;">(${avgG1Sum.toFixed(0).toLocaleString()})</div>` : ''}
+                            <div class="font-black text-lg" style="color: var(--primary-red);">${doc.ourSum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</div>
+                            ${g1MonthCount > 0 ? `<div class="text-[10px] mt-1 text-right font-medium" style="color: var(--primary-red); opacity: 0.7;">(${Math.round(avgG1SumRow).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')})</div>` : ''}
                         </td>
                         <td class="p-5 text-right">
-                            <div class="font-black text-lg" style="color: var(--primary-dark);">${doc.total.toLocaleString()}</div>
-                            ${monthCount > 0 ? `<div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-dark); opacity: 0.7;">(${avgTotalSum.toFixed(0).toLocaleString()})</div>` : ''}
+                            <div class="font-black text-lg" style="color: var(--primary-dark);">${doc.otherSum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</div>
+                            ${g2MonthCount > 0 && doc.otherSum > 0 ? `<div class="text-[10px] mt-1 text-right font-medium" style="color: #666; opacity: 0.8;">(${Math.round(avgG2SumRow).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')})</div>` : ''}
                         </td>
                     </tr>
                     <tr id="det-${i}" class="details-row bg-gray-50">
-                        <td colspan="7" class="p-6 px-12">
+                        <td colspan="9" class="p-6 px-12">
                             <table class="w-full max-w-lg bg-white rounded-xl shadow-md border-2 border-gray-100 text-xs overflow-hidden">
                                 <thead class="font-bold uppercase" style="background: linear-gradient(135deg, var(--dark-lighter), #ffffff);">
                                     <tr>
@@ -1350,45 +1475,59 @@
             // Добавляем строки итогов
             if (count > 0) {
                 // Вычисляем средние суммы для итогов
-                const totalMonths = sorted.reduce((sum, doc) => sum + doc.history.length, 0);
                 const totalG1Months = sorted.reduce((sum, doc) => sum + doc.history.filter(h => h.isG1).length, 0);
-                const avgG1Total = totalG1Months > 0 ? totalOurSum / totalG1Months : 0;
-                const avgTotalSum = totalMonths > 0 ? totalSum / totalMonths : 0;
+                const totalG2Months = sorted.reduce((sum, doc) => sum + doc.history.filter(h => !h.isG1).length, 0);
+                const avgG1Total = totalG1Months > 0 ? totalG1Sum / totalG1Months : 0;
+                const avgG2Total = totalG2Months > 0 ? totalG2Sum / totalG2Months : 0;
                 
                 html += `
                     <tr class="table-footer">
-                        <td colspan="5" class="text-right border-r border-gray-300">
+                        <td colspan="7" class="text-right border-r border-gray-300">
                             <span class="total-label">ИТОГО:</span>
                             <span style="color: var(--primary-dark);">${count} врачей</span>
                         </td>
                         <td class="text-right border-r border-gray-300">
-                            <div class="total-value" style="color: var(--primary-red);">${totalOurSum.toLocaleString()}</div>
-                            <div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-red); opacity: 0.7;">(${avgG1Total.toFixed(0).toLocaleString()})</div>
+                            <div class="total-value" style="color: var(--primary-red);">${totalG1Sum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</div>
+                            <div class="text-[10px] mt-1 font-medium text-right" style="color: var(--primary-red); opacity: 0.7;">(${Math.round(avgG1Total).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')})</div>
                         </td>
                         <td class="text-right">
-                            <div class="total-value" style="color: var(--primary-dark);">${totalSum.toLocaleString()}</div>
-                            <div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-dark); opacity: 0.7;">(${avgTotalSum.toFixed(0).toLocaleString()})</div>
+                            <div class="total-value" style="color: var(--primary-dark);">${totalG2Sum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</div>
+                            <div class="text-[10px] mt-1 font-medium text-right" style="color: var(--primary-dark); opacity: 0.7;">(${Math.round(avgG2Total).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')})</div>
                         </td>
                     </tr>
                     <tr class="table-footer">
-                        <td colspan="5" class="text-right border-r border-gray-300">
+                        <td colspan="7" class="text-right border-r border-gray-300">
                             <span class="total-label">СРЕДНЯЯ СУММА:</span>
                         </td>
                         <td class="text-right total-value border-r border-gray-300" style="color: var(--primary-red);">
-                            ${avgOurSum.toFixed(0).toLocaleString()}
+                            ${Math.round(avgG1Sum).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}
                         </td>
                         <td class="text-right total-value" style="color: var(--primary-dark);">
-                            ${avgTotal.toFixed(0).toLocaleString()}
+                            ${Math.round(avgG2Sum).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}
                         </td>
                     </tr>
                 `;
             }
 
+            // Скрываем индикатор загрузки перед отображением данных
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
             tbody.innerHTML = html;
         }
 
         function sortBy(key) { 
-            currentSort.dir *= (currentSort.key === key ? -1 : 1); 
+            if (currentSort.key === key) {
+                // Переключаем направление, если кликнули на тот же столбец
+                currentSort.dir *= -1;
+            } else {
+                // Устанавливаем направление по умолчанию для нового столбца
+                // Для числовых столбцов сортируем по убыванию, для текстовых - по возрастанию
+                const numericKeys = ['g1Sum', 'g2Sum', 'status'];
+                currentSort.dir = numericKeys.includes(key) ? -1 : 1;
+            }
             currentSort.key = key; 
             render(); 
         }
