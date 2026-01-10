@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Analysis 6.0 - Визуализация и контроль баз</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-red: #DF3B20;
+            --primary-dark: #424B52;
+            --red-light: #F15A41;
+            --red-lighter: #FFE5E1;
+            --dark-light: #5A656D;
+            --dark-lighter: #F5F6F7;
+        }
+
+        * {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .scale-in {
+            animation: scaleIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        .slide-up-delay-1 { animation-delay: 0.1s; }
+        .slide-up-delay-2 { animation-delay: 0.2s; }
+        .slide-up-delay-3 { animation-delay: 0.3s; }
+        .slide-up-delay-4 { animation-delay: 0.4s; }
+
+        /* Header Card */
+        .header-card {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark-light) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(223, 59, 32, 0.1) 0%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            background: white;
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+            border-left: 4px solid var(--primary-red);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-red);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(66, 75, 82, 0.15);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .stat-card:hover .stat-number {
+            animation: pulse 0.6s ease-in-out;
+            color: var(--primary-red);
+        }
+
+        .stat-number {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.3s ease;
+        }
+
+        /* Status Tags */
+        .status-tag {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-tag::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .status-tag:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .status-exists {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .status-missing {
+            background: linear-gradient(135deg, var(--red-lighter), #ffe0db);
+            color: var(--primary-red);
+            border: 2px solid var(--primary-red);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(66, 75, 82, 0.08);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, var(--dark-lighter), #ffffff);
+            border-bottom: 3px solid var(--primary-red);
+        }
+
+        .table-header th {
+            vertical-align: middle;
+        }
+
+        .sort-header {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .sort-header:hover {
+            background: linear-gradient(135deg, rgba(223, 59, 32, 0.05), rgba(223, 59, 32, 0.02));
+            color: var(--primary-red);
+            transform: translateX(3px);
+        }
+
+        .table-row {
+            position: relative;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .table-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--primary-red);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .table-row:hover {
+            background: linear-gradient(90deg, rgba(223, 59, 32, 0.03), transparent);
+            transform: translateX(5px);
+        }
+
+        .table-row:hover::before {
+            transform: scaleY(1);
+        }
+
+        .details-row {
+            display: none;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+            }
+        }
+
+        .details-row.open {
+            display: table-row;
+        }
+
+        /* Group Pills */
+        .group-pill {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--dark-lighter), #ffffff);
+            border: 2px solid #e0e0e0;
+            margin: 3px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .group-pill:hover {
+            transform: translateY(-2px) scale(1.05);
+            border-color: var(--primary-red);
+            box-shadow: 0 4px 8px rgba(223, 59, 32, 0.2);
+        }
+
+        /* Input Fields */
+        input, select {
+            transition: all 0.3s ease;
+            border: 2px solid #e0e0e0;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(223, 59, 32, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Button */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red), var(--red-light));
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(223, 59, 32, 0.4);
+        }
+
+        .btn-primary:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(66, 75, 82, 0.08);
+        }
+
+        /* Number Counter Animation */
+        @keyframes countUp {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .stat-number.updated {
+            animation: countUp 0.5s ease-out;
+        }
+
+        /* Loading Shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 4px 20px rgba(66, 75, 82, 0.08);
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 3px solid var(--primary-red);
+            background: linear-gradient(135deg, var(--dark-lighter), #ffffff);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 18px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dark-light);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            color: var(--primary-red);
+            background: rgba(223, 59, 32, 0.05);
+        }
+
+        .tab-button.active {
+            color: var(--primary-red);
+            border-bottom-color: var(--primary-red);
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 24px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Simple Filter Groups List */
+        .filter-groups-container {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .filter-groups-container:hover {
+            border-color: var(--primary-red);
+        }
+
+        .filter-group-item {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 8px;
+        }
+
+        .filter-group-item:hover {
+            background: rgba(223, 59, 32, 0.05);
+        }
+
+        .filter-group-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary-red);
+            flex-shrink: 0;
+        }
+
+        .filter-group-item label {
+            flex: 1;
+            cursor: pointer;
+            margin: 0;
+            font-size: 0.875rem;
+            user-select: none;
+        }
+
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .selected-tag {
+            background: linear-gradient(135deg, var(--primary-red), var(--red-light));
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .selected-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .selected-tag .remove:hover {
+            opacity: 1;
+        }
+
+        /* Statistics Section */
+        .stats-section {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(66, 75, 82, 0.08);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #ffffff, var(--dark-lighter));
+            border: 2px solid #e0e0e0;
+            border-left: 4px solid var(--primary-red);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(66, 75, 82, 0.12);
+            border-left-color: var(--red-light);
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stats-row:last-child {
+            border-bottom: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-red), var(--red-light));
+            border-radius: 10px;
+            transition: width 0.8s ease-out;
+        }
+
+        /* BDC Sub-tabs */
+        .bdc-sub-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .bdc-sub-tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark-light);
+            transition: all 0.3s ease;
+        }
+
+        .bdc-sub-tab:hover {
+            background: rgba(223, 59, 32, 0.05);
+            color: var(--primary-red);
+        }
+
+        .bdc-sub-tab.active {
+            background: var(--primary-red);
+            color: white;
+            border-color: var(--primary-red);
+        }
+
+        .bdc-sub-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .bdc-sub-content.active {
+            display: block;
+        }
+
+        /* Unique Lists */
+        .unique-list-container {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(66, 75, 82, 0.08);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .unique-list-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .unique-list-item:hover {
+            background: rgba(223, 59, 32, 0.03);
+            transform: translateX(5px);
+        }
+
+        .unique-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-count {
+            background: linear-gradient(135deg, var(--primary-red), var(--red-light));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Simple input with datalist */
+        .filter-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 0.875rem;
+            transition: border-color 0.3s;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(223, 59, 32, 0.1);
+        }
+
+        /* Table Footer with Totals */
+        .table-footer {
+            background: linear-gradient(135deg, var(--dark-lighter), #ffffff);
+            border-top: 3px solid var(--primary-red);
+            font-weight: 700;
+        }
+
+        .table-footer td {
+            padding: 16px 20px;
+            border-top: 2px solid var(--primary-red);
+        }
+
+        .total-label {
+            font-size: 0.875rem;
+            color: var(--dark-light);
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .total-value {
+            font-size: 1.25rem;
+            font-weight: 900;
+        }
+
+        .avg-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            opacity: 0.7;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body class="p-6 font-sans">
+
+    <div class="max-w-[1600px] mx-auto space-y-6">
+        
+        <!-- Site Header -->
+        <div class="text-center mb-6 fade-in">
+            <h1 class="text-4xl font-black mb-2 tracking-tight" style="color: var(--primary-dark);">Smart Analysis 6.0</h1>
+            <p class="text-base font-medium" style="color: var(--dark-light);">Визуализация и контроль баз</p>
+            </div>
+
+        <!-- Filters Section -->
+        <div class="filter-section scale-in">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-[11px] font-black mb-3 uppercase tracking-widest" style="color: var(--primary-dark);">ГРУППА 1:</label>
+                    <div class="filter-groups-container">
+                        <div id="mainGroupList"></div>
+                    </div>
+                    <div id="mainGroupTags" class="selected-tags mt-3"></div>
+                    <select id="mainGroup" multiple style="display: none;"></select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-3 uppercase tracking-widest" style="color: var(--primary-dark);">ДРУГИЕ ГРУППЫ:</label>
+                    <div class="filter-groups-container">
+                        <div id="donorGroupsList"></div>
+                    </div>
+                    <div id="donorGroupsTags" class="selected-tags mt-3"></div>
+                    <select id="donorGroups" multiple style="display: none;"></select>
+            </div>
+                <div class="lg:col-span-2 grid grid-cols-2 gap-4">
+                    <input type="text" id="fName" placeholder="Поиск врача..." class="filter-input" list="datalistDoctors" autocomplete="off">
+                    <datalist id="datalistDoctors"></datalist>
+                    <input type="text" id="fSpec" placeholder="Специальность..." class="filter-input" list="datalistSpecs" autocomplete="off">
+                    <datalist id="datalistSpecs"></datalist>
+                    <input type="text" id="fLPU" placeholder="Учреждение..." class="filter-input" list="datalistLPU" autocomplete="off">
+                    <datalist id="datalistLPU"></datalist>
+                    <input type="text" id="fReg" placeholder="Регион..." class="filter-input" list="datalistRegions" autocomplete="off">
+                    <datalist id="datalistRegions"></datalist>
+                    <button onclick="processData()" class="col-span-2 btn-primary text-white font-bold py-4 rounded-2xl shadow-xl text-base relative overflow-hidden">
+                        <span class="relative z-10">ОБНОВИТЬ ВСЕ ДАННЫЕ</span>
+                    </button>
+            </div>
+            </div>
+        </div>
+
+
+        <!-- Tabs Section -->
+        <div class="tabs-container scale-in">
+            <div class="tabs-header">
+                <button class="tab-button active" onclick="switchTab('bdc')" style="color: var(--primary-dark);">
+                    БДК
+                </button>
+                <button class="tab-button" onclick="switchTab('coverage')" style="color: var(--primary-dark);">
+                    Охват и потенциал
+                </button>
+        </div>
+
+            <!-- Tab 1: БДК -->
+            <div id="tabBDC" class="tab-content active">
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+                    <div class="header-card text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-gray-300 text-xs font-medium mb-1">Статистика</p>
+                            <h2 class="text-xl font-black tracking-tight">Обзор данных</h2>
+                </div>
+                </div>
+                    <div class="stat-card p-5 rounded-3xl shadow-lg">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color: var(--primary-red);">БДК собственная</p>
+                        <p class="text-[8px] font-medium mb-2 opacity-70" style="color: var(--primary-dark);">Врачи с которыми работает только первая группа</p>
+                        <div id="statOur" class="stat-number text-2xl font-black italic">0</div>
+                </div>
+                    <div class="stat-card p-5 rounded-3xl shadow-lg">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color: var(--primary-dark);">БДК общая</p>
+                        <p class="text-[8px] font-medium mb-2 opacity-70" style="color: var(--primary-dark);">Врачи с которыми работают обе группы</p>
+                        <div id="statOthers" class="stat-number text-2xl font-black italic">0</div>
+                    </div>
+                    <div class="stat-card p-5 rounded-3xl shadow-lg">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color: var(--red-light);">БДК потенциал</p>
+                        <p class="text-[8px] font-medium mb-2 opacity-70" style="color: var(--primary-dark);">Врачи с которыми не работает первая группа</p>
+                        <div id="statMissing" class="stat-number text-2xl font-black italic" style="color: var(--primary-red);">0</div>
+            </div>
+        </div>
+
+                <div class="table-container fade-in">
+            <table class="min-w-full">
+                        <thead class="table-header" style="display: none;">
+                            <tr class="text-[11px] font-black uppercase tracking-widest" style="color: var(--primary-dark);">
+                                <th class="p-5 text-center border-r border-gray-300 w-16">№</th>
+                                <th class="p-5 sort-header text-left border-r border-gray-300" onclick="sortBy('name')">Врач ↕</th>
+                                <th class="p-5 sort-header text-left border-r border-gray-300" onclick="sortBy('lpu')">Регион / ЛПУ ↕</th>
+                                <th class="p-5 text-center border-r border-gray-300">Статус</th>
+                                <th class="p-5 text-left border-r border-gray-300">Распределение Групп</th>
+                                <th class="p-5 sort-header text-right border-r border-gray-300" onclick="sortBy('ourSum')">Гр. 1 (Σ) ↕</th>
+                                <th class="p-5 sort-header text-right" onclick="sortBy('total')">Общий Итог ↕</th>
+                    </tr>
+                        </thead>
+                        <tbody id="resultTable" class="divide-y divide-gray-100 text-sm"></tbody>
+            </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Охват и потенциал -->
+            <div id="tabCoverage" class="tab-content">
+                <div class="stats-grid" id="statisticsGrid">
+                    <div class="text-center text-gray-400 py-10">
+                        Выберите группы и нажмите "Обновить данные" для отображения статистики
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwZGelpJ-PgQ4AFO5wSUQDj45KiuhJ-6py-fm-ek-XknGnAWvDv1_-8nl1Oy9ShFaD0Gg/exec';
+        let rawData = [];
+        let analyzedData = [];
+        let currentSort = { key: 'total', dir: -1 };
+        let allGroups = [];
+
+        // Number counter animation
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.innerText = Math.floor(progress * (end - start) + start);
+                element.classList.add('updated');
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    element.classList.remove('updated');
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab
+            if (tabName === 'coverage') {
+                document.querySelector('.tab-button[onclick="switchTab(\'coverage\')"]').classList.add('active');
+                document.getElementById('tabCoverage').classList.add('active');
+            } else if (tabName === 'bdc') {
+                document.querySelector('.tab-button[onclick="switchTab(\'bdc\')"]').classList.add('active');
+                document.getElementById('tabBDC').classList.add('active');
+            }
+        }
+
+        // Update filter tags display
+        function updateFilterTags(type) {
+            const select = document.getElementById(type);
+            const tagsContainer = document.getElementById(type + 'Tags');
+            const list = document.getElementById(type + 'List');
+            const selected = Array.from(select.selectedOptions).map(o => o.value);
+            
+            // Обновляем чекбоксы в списке
+            if (list) {
+                list.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    const groupName = checkbox.value;
+                    checkbox.checked = selected.includes(groupName);
+                });
+            }
+            
+            // Обновляем теги
+            if (tagsContainer) {
+                tagsContainer.innerHTML = '';
+                
+                if (selected.length > 0) {
+                    selected.forEach(group => {
+                        const tag = document.createElement('span');
+                        tag.className = 'selected-tag';
+                        tag.innerHTML = `${group} <span class="remove" onclick="removeFilterGroup('${type}', '${group}'); event.stopPropagation();">×</span>`;
+                        tagsContainer.appendChild(tag);
+                    });
+                }
+            }
+        }
+
+        // Remove group from filter
+        function removeFilterGroup(type, groupName) {
+            const select = document.getElementById(type);
+            const option = Array.from(select.options).find(o => o.value === groupName);
+            
+            if (option) {
+                option.selected = false;
+                updateFilterTags(type);
+            }
+        }
+
+        async function init() {
+            const resp = await fetch(WEB_APP_URL);
+            rawData = await resp.json();
+            allGroups = [...new Set(rawData.map(r => r['Группа']))].filter(g => g).sort();
+            
+            // Создаем выпадающие списки для групп
+            const mainGroupList = document.getElementById('mainGroupList');
+            const donorGroupsList = document.getElementById('donorGroupsList');
+            const mainGroupSelect = document.getElementById('mainGroup');
+            const donorGroupsSelect = document.getElementById('donorGroups');
+            
+            // Создаем элементы списка для каждой группы
+            allGroups.forEach(group => {
+                // Добавляем в select
+                mainGroupSelect.add(new Option(group, group));
+                donorGroupsSelect.add(new Option(group, group));
+                
+                // Создаем элемент списка с чекбоксом для Группы 1
+                const item1 = document.createElement('div');
+                item1.className = 'filter-group-item';
+                
+                const checkbox1 = document.createElement('input');
+                checkbox1.type = 'checkbox';
+                checkbox1.value = group;
+                checkbox1.id = 'main-' + group.replace(/[^a-zA-Z0-9]/g, '_');
+                checkbox1.onchange = () => {
+                    const option = Array.from(mainGroupSelect.options).find(o => o.value === group);
+                    if (option) {
+                        option.selected = checkbox1.checked;
+                        updateFilterTags('mainGroup');
+                    }
+                };
+                
+                const label1 = document.createElement('label');
+                label1.htmlFor = checkbox1.id;
+                label1.textContent = group;
+                
+                item1.appendChild(checkbox1);
+                item1.appendChild(label1);
+                mainGroupList.appendChild(item1);
+                
+                // То же самое для Других групп
+                const item2 = document.createElement('div');
+                item2.className = 'filter-group-item';
+                
+                const checkbox2 = document.createElement('input');
+                checkbox2.type = 'checkbox';
+                checkbox2.value = group;
+                checkbox2.id = 'donor-' + group.replace(/[^a-zA-Z0-9]/g, '_');
+                checkbox2.onchange = () => {
+                    const option = Array.from(donorGroupsSelect.options).find(o => o.value === group);
+                    if (option) {
+                        option.selected = checkbox2.checked;
+                        updateFilterTags('donorGroups');
+                    }
+                };
+                
+                const label2 = document.createElement('label');
+                label2.htmlFor = checkbox2.id;
+                label2.textContent = group;
+                
+                item2.appendChild(checkbox2);
+                item2.appendChild(label2);
+                donorGroupsList.appendChild(item2);
+            });
+            
+            // По умолчанию выбираем "Линда" если есть
+            const lindaOption = Array.from(mainGroupSelect.options).find(o => o.value === 'Линда');
+            if (lindaOption) {
+                lindaOption.selected = true;
+                const lindaCheckbox = document.getElementById('main-' + 'Линда'.replace(/[^a-zA-Z0-9]/g, '_'));
+                if (lindaCheckbox) {
+                    lindaCheckbox.checked = true;
+                }
+                updateFilterTags('mainGroup');
+            }
+
+            // Заполняем datalist для автокомплита
+            const datalistDoctors = document.getElementById('datalistDoctors');
+            const datalistSpecs = document.getElementById('datalistSpecs');
+            const datalistLPU = document.getElementById('datalistLPU');
+            const datalistRegions = document.getElementById('datalistRegions');
+            
+            // Уникальные врачи
+            const uniqueDoctors = [...new Set(rawData.map(r => r['Клиент']).filter(n => n))].sort();
+            uniqueDoctors.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                datalistDoctors.appendChild(option);
+            });
+            
+            // Уникальные специальности
+            const uniqueSpecs = [...new Set(rawData.map(r => r['Специальность'] || 'Не указано').filter(s => s))].sort();
+            uniqueSpecs.forEach(spec => {
+                const option = document.createElement('option');
+                option.value = spec;
+                datalistSpecs.appendChild(option);
+            });
+            
+            // Уникальные учреждения
+            const uniqueLPUs = [...new Set(rawData.map(r => r['K'] || r['НазваниеЛПУ'] || '').filter(l => l))].sort();
+            uniqueLPUs.forEach(lpu => {
+                const option = document.createElement('option');
+                option.value = lpu;
+                datalistLPU.appendChild(option);
+            });
+            
+            // Уникальные регионы
+            const uniqueRegions = [...new Set(rawData.map(r => r['H'] || r['Область'] || '').filter(r => r))].sort();
+            uniqueRegions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region;
+                datalistRegions.appendChild(option);
+            });
+        }
+
+        function processData() {
+            const g1 = Array.from(document.getElementById('mainGroup').selectedOptions).map(o => o.value);
+            const g2 = Array.from(document.getElementById('donorGroups').selectedOptions).map(o => o.value);
+            const filtered = {};
+            const statsGroups = {};
+
+            rawData.forEach(row => {
+                const name = row['Клиент'], group = row['Группа'], month = row['Месяц'];
+                const sum = parseFloat(String(row['Фактическая сумма выдачи']).replace(',', '.')) || 0;
+                
+                if(document.getElementById('fName').value && !name.toLowerCase().includes(document.getElementById('fName').value.toLowerCase())) return;
+                if(document.getElementById('fSpec').value && !String(row['Специальность']).toLowerCase().includes(document.getElementById('fSpec').value.toLowerCase())) return;
+                const lpuNameValue = row['K'] || row['НазваниеЛПУ'] || '';
+                if(document.getElementById('fLPU').value && !String(lpuNameValue).toLowerCase().includes(document.getElementById('fLPU').value.toLowerCase())) return;
+                const regionValue = row['H'] || row['Область'] || '';
+                if(document.getElementById('fReg').value && !String(regionValue).toLowerCase().includes(document.getElementById('fReg').value.toLowerCase())) return;
+
+                if (!filtered[name]) {
+                    const lpuName = row['K'] || row['НазваниеЛПУ'] || ''; // НазваниеЛПУ из столбца K
+                    const lpuCode = row['L'] || row['Аб'] || ''; // Аб из столбца L
+                    const region = row['H'] || row['Область'] || ''; // Область из столбца H
+                    const lpuDisplay = lpuCode ? `${lpuName} (${lpuCode})` : lpuName;
+                    filtered[name] = { 
+                        name, spec: row['Специальность'], 
+                        lpu: region ? `${region}, ${lpuDisplay}` : lpuDisplay,
+                        lpuName: lpuName, lpuCode: lpuCode, region: region,
+                        ourSum: 0, total: 0, existsInOur: false, history: [], groupSums: {} 
+                    };
+                }
+
+                if (g1.includes(group) || g2.includes(group)) {
+                    if (sum > 0) {
+                        filtered[name].history.push({ month, group, sum, isG1: g1.includes(group) });
+                        filtered[name].groupSums[group] = (filtered[name].groupSums[group] || 0) + sum;
+                        if (g1.includes(group)) { filtered[name].ourSum += sum; filtered[name].existsInOur = true; }
+                        filtered[name].total += sum;
+                        statsGroups[group] = (statsGroups[group] || 0) + sum;
+                    }
+                }
+            });
+
+            analyzedData = Object.values(filtered).filter(d => d.total > 0);
+            updateDashboard(g1);
+            renderStatistics(g1);
+            render();
+        }
+
+        function updateDashboard(g1Names) {
+            // Врачи с которыми работает только первая группа (БДК собственная)
+            const onlyG1Count = analyzedData.filter(d => {
+                if (!d.existsInOur) return false;
+                // Проверяем, есть ли записи из других групп
+                return !d.history.some(h => !h.isG1);
+            }).length;
+
+            // Врачи с которыми работают обе группы (БДК общая)
+            const bothGroupsCount = analyzedData.filter(d => {
+                if (!d.existsInOur) return false;
+                // Проверяем, есть ли записи из других групп
+                return d.history.some(h => !h.isG1);
+            }).length;
+
+            // Врачи с которыми не работает первая группа (БДК потенциал)
+            const noG1Count = analyzedData.filter(d => !d.existsInOur).length;
+
+            const ourEl = document.getElementById('statOur');
+            const othersEl = document.getElementById('statOthers');
+            const missingEl = document.getElementById('statMissing');
+
+            const ourCurrent = parseInt(ourEl.innerText) || 0;
+            const othersCurrent = parseInt(othersEl.innerText) || 0;
+            const missingCurrent = parseInt(missingEl.innerText) || 0;
+
+            animateValue(ourEl, ourCurrent, onlyG1Count, 500);
+            animateValue(othersEl, othersCurrent, bothGroupsCount, 500);
+            animateValue(missingEl, missingCurrent, noG1Count, 500);
+        }
+
+        function renderStatistics(g1Names) {
+            if (g1Names.length === 0) {
+                document.getElementById('statisticsGrid').innerHTML = `
+                    <div class="text-center text-gray-400 py-10">
+                        Выберите группы из раздела "ГРУППА 1" и нажмите "Обновить данные"
+                    </div>
+                `;
+                return;
+            }
+
+            // Статистика по учреждениям
+            const lpuStats = {};
+            const allLPUDoctors = {};
+            
+            // Подсчет всех врачей по учреждениям (из всех групп)
+            rawData.forEach(row => {
+                const lpuName = row['K'] || row['НазваниеЛПУ'] || ''; // НазваниеЛПУ из столбца K
+                const lpuCode = row['L'] || row['Аб'] || ''; // Аб из столбца L
+                const lpuKey = lpuCode ? `${lpuName} (${lpuCode})` : lpuName;
+                const name = row['Клиент'];
+                if (!allLPUDoctors[lpuKey]) {
+                    allLPUDoctors[lpuKey] = new Set();
+                }
+                allLPUDoctors[lpuKey].add(name);
+            });
+
+            // Подсчет врачей группы 1 по учреждениям
+            analyzedData.forEach(doc => {
+                if (doc.existsInOur) {
+                    const lpuKey = doc.lpu;
+                    if (!lpuStats[lpuKey]) {
+                        lpuStats[lpuKey] = {
+                            name: doc.lpuName,
+                            code: doc.lpuCode,
+                            doctorsInG1: new Set(),
+                            allDoctors: allLPUDoctors[lpuKey] || new Set()
+                        };
+                    }
+                    lpuStats[lpuKey].doctorsInG1.add(doc.name);
+                }
+            });
+
+            // Статистика по специальностям
+            const specStats = {};
+            const allSpecDoctors = {};
+            
+            // Подсчет всех врачей по специальностям
+            rawData.forEach(row => {
+                const spec = row['Специальность'] || 'Не указано';
+                const name = row['Клиент'];
+                if (!allSpecDoctors[spec]) {
+                    allSpecDoctors[spec] = new Set();
+                }
+                allSpecDoctors[spec].add(name);
+            });
+
+            // Подсчет врачей группы 1 по специальностям
+            analyzedData.forEach(doc => {
+                if (doc.existsInOur) {
+                    const spec = doc.spec || 'Не указано';
+                    if (!specStats[spec]) {
+                        specStats[spec] = {
+                            doctorsInG1: new Set(),
+                            allDoctors: allSpecDoctors[spec] || new Set()
+                        };
+                    }
+                    specStats[spec].doctorsInG1.add(doc.name);
+                }
+            });
+
+            // Формирование HTML для учреждений
+            const lpuArray = Object.entries(lpuStats)
+                .map(([key, stats]) => ({
+                    key,
+                    name: stats.name,
+                    code: stats.code,
+                    doctorsInG1: stats.doctorsInG1.size,
+                    allDoctors: stats.allDoctors.size,
+                    potential: stats.allDoctors.size - stats.doctorsInG1.size,
+                    coverage: stats.allDoctors.size > 0 ? (stats.doctorsInG1.size / stats.allDoctors.size * 100) : 0
+                }))
+                .sort((a, b) => b.doctorsInG1 - a.doctorsInG1)
+                .slice(0, 20);
+
+            // Формирование HTML для специальностей
+            const specArray = Object.entries(specStats)
+                .map(([spec, stats]) => ({
+                    spec,
+                    doctorsInG1: stats.doctorsInG1.size,
+                    allDoctors: stats.allDoctors.size,
+                    potential: stats.allDoctors.size - stats.doctorsInG1.size,
+                    coverage: stats.allDoctors.size > 0 ? (stats.doctorsInG1.size / stats.allDoctors.size * 100) : 0
+                }))
+                .sort((a, b) => b.doctorsInG1 - a.doctorsInG1)
+                .slice(0, 20);
+
+            let html = '';
+
+            // Карточка с топ учреждениями
+            html += `
+                <div class="stats-card">
+                    <h3 class="text-base font-black mb-4 uppercase tracking-wide" style="color: var(--primary-dark);">Охват учреждений</h3>
+                    <div class="text-sm text-gray-600 mb-4">Топ-${Math.min(lpuArray.length, 20)} учреждений по охвату</div>
+                    <div style="max-height: 500px; overflow-y: auto;">
+            `;
+            
+            lpuArray.forEach(lpu => {
+                html += `
+                    <div class="stats-row">
+                        <div>
+                            <div class="font-bold text-sm" style="color: var(--primary-dark);">${lpu.name}</div>
+                            <div class="text-xs text-gray-500">${lpu.code}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-lg" style="color: var(--primary-red);">${lpu.doctorsInG1}</div>
+                            <div class="text-xs text-gray-500">из ${lpu.allDoctors}</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2 flex justify-between">
+                        <span>Потенциал: <strong style="color: var(--primary-red);">${lpu.potential}</strong> врачей</span>
+                        <span>Охват: <strong>${lpu.coverage.toFixed(1)}%</strong></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${lpu.coverage}%"></div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+
+            // Карточка с топ специальностями
+            html += `
+                <div class="stats-card">
+                    <h3 class="text-base font-black mb-4 uppercase tracking-wide" style="color: var(--primary-dark);">Охват специальностей</h3>
+                    <div class="text-sm text-gray-600 mb-4">Топ-${Math.min(specArray.length, 20)} специальностей по охвату</div>
+                    <div style="max-height: 500px; overflow-y: auto;">
+            `;
+
+            specArray.forEach(spec => {
+                html += `
+                    <div class="stats-row">
+                        <div>
+                            <div class="font-bold text-sm" style="color: var(--primary-dark);">${spec.spec}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-lg" style="color: var(--primary-red);">${spec.doctorsInG1}</div>
+                            <div class="text-xs text-gray-500">из ${spec.allDoctors}</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2 flex justify-between">
+                        <span>Потенциал: <strong style="color: var(--primary-red);">${spec.potential}</strong> врачей</span>
+                        <span>Охват: <strong>${spec.coverage.toFixed(1)}%</strong></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${spec.coverage}%"></div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+
+            // Общая статистика
+            const totalLPUs = Object.keys(allLPUDoctors).length;
+            const coveredLPUs = lpuArray.length;
+            const totalSpecs = Object.keys(allSpecDoctors).length;
+            const coveredSpecs = specArray.length;
+            const totalDoctors = new Set(rawData.map(r => r['Клиент'])).size;
+            const g1Doctors = new Set(analyzedData.filter(d => d.existsInOur).map(d => d.name)).size;
+
+            html += `
+                <div class="stats-card">
+                    <h3 class="text-base font-black mb-4 uppercase tracking-wide" style="color: var(--primary-dark);">Общая статистика охвата</h3>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Всего учреждений</div>
+                        <div class="font-black text-lg" style="color: var(--primary-dark);">${totalLPUs}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Учреждений с охватом</div>
+                        <div class="font-black text-lg" style="color: var(--primary-red);">${coveredLPUs}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Всего специальностей</div>
+                        <div class="font-black text-lg" style="color: var(--primary-dark);">${totalSpecs}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Специальностей с охватом</div>
+                        <div class="font-black text-lg" style="color: var(--primary-red);">${coveredSpecs}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Всего врачей в базе</div>
+                        <div class="font-black text-lg" style="color: var(--primary-dark);">${totalDoctors}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Врачей в Группе 1</div>
+                        <div class="font-black text-lg" style="color: var(--primary-red);">${g1Doctors}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="font-medium text-sm" style="color: var(--primary-dark);">Потенциал охвата</div>
+                        <div class="font-black text-lg" style="color: var(--primary-red);">${totalDoctors - g1Doctors}</div>
+                    </div>
+                    <div class="progress-bar mt-4">
+                        <div class="progress-fill" style="width: ${totalDoctors > 0 ? (g1Doctors / totalDoctors * 100) : 0}%"></div>
+                    </div>
+                    <div class="text-center text-xs text-gray-500 mt-2">
+                        Общий охват: ${totalDoctors > 0 ? ((g1Doctors / totalDoctors * 100).toFixed(1)) : 0}%
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('statisticsGrid').innerHTML = html;
+            
+            // Анимация progress bars
+            setTimeout(() => {
+                document.querySelectorAll('.progress-fill').forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 100);
+        }
+
+
+        function render() {
+            const tbody = document.getElementById('resultTable');
+            
+            // Добавляем среднюю сумму для каждого врача для сортировки
+            const dataWithAvg = analyzedData.map(doc => {
+                const monthCount = doc.history.length;
+                const avgSum = monthCount > 0 ? doc.total / monthCount : 0;
+                return { ...doc, avgTotal: avgSum };
+            });
+            
+            const sorted = dataWithAvg.sort((a, b) => {
+                let vA = a[currentSort.key], vB = b[currentSort.key];
+                // Если ключ avgTotal, используем вычисленное значение
+                if (currentSort.key === 'avgTotal') {
+                    vA = a.avgTotal;
+                    vB = b.avgTotal;
+                }
+                return vA > vB ? currentSort.dir : vA < vB ? -currentSort.dir : 0;
+            });
+
+            // Вычисляем итоги и средние значения
+            const totalOurSum = sorted.reduce((sum, doc) => sum + doc.ourSum, 0);
+            const totalSum = sorted.reduce((sum, doc) => sum + doc.total, 0);
+            const count = sorted.length;
+            const avgOurSum = count > 0 ? totalOurSum / count : 0;
+            const avgTotal = count > 0 ? totalSum / count : 0;
+
+            let html = sorted.map((doc, i) => {
+                const pills = Object.entries(doc.groupSums).map(([g, s]) => `<span class="group-pill"><b>${g}:</b> ${s.toLocaleString()}</span>`).join('');
+                const historyRows = doc.history.sort((a,b)=>a.month>b.month?1:-1).map(h => `
+                    <tr class="${h.isG1 ? 'bg-red-50' : ''} border-b border-gray-100">
+                        <td class="p-3 pl-8">${h.month}</td>
+                        <td class="p-3 font-bold ${h.isG1 ? 'text-red-600' : ''}" style="${h.isG1 ? 'color: var(--primary-red);' : ''}">${h.group}</td>
+                        <td class="p-3 text-right font-semibold">${h.sum.toLocaleString()}</td>
+                    </tr>`).join('');
+
+                // Вычисляем средние суммы
+                const monthCount = doc.history.length;
+                const g1MonthCount = doc.history.filter(h => h.isG1).length;
+                const avgG1Sum = g1MonthCount > 0 ? doc.ourSum / g1MonthCount : 0;
+                const avgTotalSum = monthCount > 0 ? doc.total / monthCount : 0;
+
+                return `
+                    <tr class="table-row cursor-pointer" onclick="document.getElementById('det-${i}').classList.toggle('open')">
+                        <td class="p-5 text-center border-r border-gray-300 font-medium" style="color: var(--primary-dark);">${i + 1}</td>
+                        <td class="p-5 text-left border-r border-gray-300">
+                            <div class="font-bold text-base" style="color: var(--primary-dark);">${doc.name}</div>
+                            <div class="text-xs mt-1" style="color: var(--primary-red);">${doc.spec}</div>
+                        </td>
+                        <td class="p-5 text-left text-xs font-medium border-r border-gray-300" style="color: var(--dark-light);">${doc.lpu}</td>
+                        <td class="p-5 text-center border-r border-gray-300">
+                            <span class="status-tag ${doc.existsInOur ? 'status-exists' : 'status-missing'}">
+                                ${doc.existsInOur ? 'Гр 1 ✓' : 'НЕТ'}
+                            </span>
+                        </td>
+                        <td class="p-5 text-left w-64 leading-relaxed border-r border-gray-300">${pills}</td>
+                        <td class="p-5 text-right border-r border-gray-300">
+                            <div class="font-black text-lg" style="color: var(--primary-red);">${doc.ourSum.toLocaleString()}</div>
+                            ${g1MonthCount > 0 ? `<div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-red); opacity: 0.7;">(${avgG1Sum.toFixed(0).toLocaleString()})</div>` : ''}
+                        </td>
+                        <td class="p-5 text-right">
+                            <div class="font-black text-lg" style="color: var(--primary-dark);">${doc.total.toLocaleString()}</div>
+                            ${monthCount > 0 ? `<div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-dark); opacity: 0.7;">(${avgTotalSum.toFixed(0).toLocaleString()})</div>` : ''}
+                        </td>
+                    </tr>
+                    <tr id="det-${i}" class="details-row bg-gray-50">
+                        <td colspan="7" class="p-6 px-12">
+                            <table class="w-full max-w-lg bg-white rounded-xl shadow-md border-2 border-gray-100 text-xs overflow-hidden">
+                                <thead class="font-bold uppercase" style="background: linear-gradient(135deg, var(--dark-lighter), #ffffff);">
+                                    <tr>
+                                        <th class="p-3 text-left">Месяц</th>
+                                        <th class="p-3 text-left">Группа</th>
+                                        <th class="p-3 text-right">Сумма</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${historyRows}</tbody>
+                            </table>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Добавляем строки итогов
+            if (count > 0) {
+                // Вычисляем средние суммы для итогов
+                const totalMonths = sorted.reduce((sum, doc) => sum + doc.history.length, 0);
+                const totalG1Months = sorted.reduce((sum, doc) => sum + doc.history.filter(h => h.isG1).length, 0);
+                const avgG1Total = totalG1Months > 0 ? totalOurSum / totalG1Months : 0;
+                const avgTotalSum = totalMonths > 0 ? totalSum / totalMonths : 0;
+                
+                html += `
+                    <tr class="table-footer">
+                        <td colspan="5" class="text-right border-r border-gray-300">
+                            <span class="total-label">ИТОГО:</span>
+                            <span style="color: var(--primary-dark);">${count} врачей</span>
+                        </td>
+                        <td class="text-right border-r border-gray-300">
+                            <div class="total-value" style="color: var(--primary-red);">${totalOurSum.toLocaleString()}</div>
+                            <div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-red); opacity: 0.7;">(${avgG1Total.toFixed(0).toLocaleString()})</div>
+                        </td>
+                        <td class="text-right">
+                            <div class="total-value" style="color: var(--primary-dark);">${totalSum.toLocaleString()}</div>
+                            <div class="text-xs mt-1 font-medium text-right" style="color: var(--primary-dark); opacity: 0.7;">(${avgTotalSum.toFixed(0).toLocaleString()})</div>
+                        </td>
+                    </tr>
+                    <tr class="table-footer">
+                        <td colspan="5" class="text-right border-r border-gray-300">
+                            <span class="total-label">СРЕДНЯЯ СУММА:</span>
+                        </td>
+                        <td class="text-right total-value border-r border-gray-300" style="color: var(--primary-red);">
+                            ${avgOurSum.toFixed(0).toLocaleString()}
+                        </td>
+                        <td class="text-right total-value" style="color: var(--primary-dark);">
+                            ${avgTotal.toFixed(0).toLocaleString()}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        function sortBy(key) { 
+            currentSort.dir *= (currentSort.key === key ? -1 : 1); 
+            currentSort.key = key; 
+            render(); 
+        }
+        
+        init();
+    </script>
+</body>
+</html>
