@@ -301,6 +301,8 @@
             position: relative;
             overflow: hidden;
             transform: translateY(0);
+            border: none;
+            transition: all 0.3s ease;
         }
 
         .btn-primary::before {
@@ -311,30 +313,31 @@
             width: 0;
             height: 0;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
             transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            transition: width 0.4s, height 0.4s;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(223, 59, 32, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(223, 59, 32, 0.35);
         }
 
         .btn-primary:hover::before {
-            width: 300px;
-            height: 300px;
+            width: 250px;
+            height: 250px;
         }
 
         .btn-primary:active {
-            transform: translateY(-1px);
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(223, 59, 32, 0.3);
         }
 
         /* Filter Section */
         .filter-section {
             background: white;
-            border-radius: 20px;
-            padding: 24px;
+            border-radius: 16px;
+            padding: 16px;
             box-shadow: 0 4px 20px rgba(66, 75, 82, 0.08);
         }
 
@@ -410,25 +413,63 @@
         /* Simple Filter Groups List */
         .filter-groups-container {
             background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 16px;
-            padding: 16px;
-            max-height: 300px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 8px;
+            max-height: 160px;
             overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        /* Стилизация скроллбара для фильтров */
+        .filter-groups-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .filter-groups-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .filter-groups-container::-webkit-scrollbar-thumb {
+            background: var(--primary-red);
+            border-radius: 10px;
+        }
+
+        .filter-groups-container::-webkit-scrollbar-thumb:hover {
+            background: var(--red-light);
+        }
+
+        .selected-tags::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .selected-tags::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .selected-tags::-webkit-scrollbar-thumb {
+            background: var(--primary-red);
+            border-radius: 10px;
+        }
+
+        .selected-tags::-webkit-scrollbar-thumb:hover {
+            background: var(--red-light);
         }
 
         .filter-groups-container:hover {
             border-color: var(--primary-red);
+            box-shadow: 0 2px 8px rgba(223, 59, 32, 0.1);
         }
 
         .filter-group-item {
-            padding: 10px 12px;
+            padding: 6px 8px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             cursor: pointer;
             transition: background 0.2s;
-            border-radius: 8px;
+            border-radius: 6px;
         }
 
         .filter-group-item:hover {
@@ -436,8 +477,8 @@
         }
 
         .filter-group-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
             accent-color: var(--primary-red);
             flex-shrink: 0;
@@ -447,39 +488,67 @@
             flex: 1;
             cursor: pointer;
             margin: 0;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             user-select: none;
+            line-height: 1.3;
+        }
+
+        .filter-group-item.select-all {
+            background: rgba(223, 59, 32, 0.08);
+            border-bottom: 1.5px solid var(--primary-red);
+            font-weight: 700;
+            margin-bottom: 4px;
+            padding: 6px 8px;
+        }
+
+        .filter-group-item.select-all label {
+            color: var(--primary-red);
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .filter-group-item.select-all:hover {
+            background: rgba(223, 59, 32, 0.12);
         }
 
         .selected-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
+            gap: 4px;
+            margin-top: 6px;
+            min-height: 24px;
+            max-height: 60px;
+            overflow-y: auto;
+            padding: 4px 0;
         }
 
         .selected-tag {
             background: linear-gradient(135deg, var(--primary-red), var(--red-light));
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
+            white-space: nowrap;
+            max-width: 100%;
         }
 
         .selected-tag .remove {
             cursor: pointer;
             font-weight: bold;
-            font-size: 1rem;
-            opacity: 0.8;
+            font-size: 0.85rem;
+            opacity: 0.9;
             transition: opacity 0.2s;
+            line-height: 1;
+            margin-left: 2px;
         }
 
         .selected-tag .remove:hover {
             opacity: 1;
+            transform: scale(1.2);
         }
 
         /* Statistics Section */
@@ -624,17 +693,24 @@
         /* Simple input with datalist */
         .filter-input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 16px;
-            font-size: 0.875rem;
-            transition: border-color 0.3s;
+            padding: 8px 12px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            background: white;
         }
 
         .filter-input:focus {
             outline: none;
             border-color: var(--primary-red);
-            box-shadow: 0 0 0 4px rgba(223, 59, 32, 0.1);
+            box-shadow: 0 0 0 3px rgba(223, 59, 32, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .filter-input::placeholder {
+            font-size: 0.75rem;
+            color: #999;
         }
 
         /* Table Footer with Totals */
@@ -667,50 +743,306 @@
             opacity: 0.7;
             margin-left: 8px;
         }
+
+        /* Site Header */
+        .site-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark-light) 100%);
+            border-radius: 24px;
+            padding: 32px 40px;
+            box-shadow: 0 8px 32px rgba(66, 75, 82, 0.15);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+
+        .site-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(223, 59, 32, 0.15) 0%, transparent 70%);
+            animation: shimmer 4s infinite;
+        }
+
+        .site-header-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .site-header-title {
+            color: white;
+        }
+
+        .site-header-title h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .site-header-title p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+        }
+
+        .site-header-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .site-header-badge:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .site-header {
+                padding: 24px;
+            }
+
+            .site-header-title h1 {
+                font-size: 2rem;
+            }
+
+            .site-header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(248, 249, 250, 0.98) 0%, rgba(233, 236, 239, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .loading-overlay.hidden {
+            animation: fadeOut 0.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 6px solid rgba(223, 59, 32, 0.1);
+            border-top-color: var(--primary-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-subtext {
+            font-size: 1rem;
+            color: var(--dark-light);
+            font-weight: 500;
+            opacity: 0.85;
+            animation: fadeInOut 2s ease-in-out infinite;
+            margin-top: 8px;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .loading-dots {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary-red);
+            margin: 0 3px;
+            animation: bounce 1.4s ease-in-out infinite;
+            vertical-align: middle;
+        }
+
+        .loading-dots:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: translateY(0) scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: translateY(-8px) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .loading-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body class="p-6 font-sans">
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Загружаю ваши данные</div>
+            <div class="loading-subtext">Подождите пару секунд<span class="loading-dots"></span><span class="loading-dots"></span><span class="loading-dots"></span></div>
+        </div>
+    </div>
+
     <div class="max-w-[1600px] mx-auto space-y-6">
         
         <!-- Site Header -->
-        <div class="text-center mb-6 fade-in">
-            <h1 class="text-4xl font-black mb-2 tracking-tight" style="color: var(--primary-dark);">Smart Analysis 6.0</h1>
-            <p class="text-base font-medium" style="color: var(--dark-light);">Визуализация и контроль баз</p>
+        <header class="site-header fade-in">
+            <div class="site-header-content">
+                <div class="site-header-title">
+                    <h1>Smart Analysis 6.0</h1>
+                    <p>Визуализация и контроль баз данных</p>
+                </div>
+                <div class="site-header-badge">
+                    Версия 6.0
+                </div>
             </div>
+        </header>
 
         <!-- Filters Section -->
         <div class="filter-section scale-in">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div>
-                    <label class="block text-[11px] font-black mb-3 uppercase tracking-widest" style="color: var(--primary-dark);">ГРУППА 1:</label>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+                <!-- ГРУППА 1 -->
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-black mb-1.5 uppercase tracking-wider flex items-center justify-between" style="color: var(--primary-dark);">
+                        <span>ГРУППА 1</span>
+                        <span id="mainGroupCount" class="text-[9px] font-normal bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full" style="display: none;">0</span>
+                    </label>
                     <div class="filter-groups-container">
                         <div id="mainGroupList"></div>
                     </div>
-                    <div id="mainGroupTags" class="selected-tags mt-3"></div>
+                    <div id="mainGroupTags" class="selected-tags"></div>
                     <select id="mainGroup" multiple style="display: none;"></select>
                 </div>
-                <div>
-                    <label class="block text-[11px] font-black mb-3 uppercase tracking-widest" style="color: var(--primary-dark);">ДРУГИЕ ГРУППЫ:</label>
+                
+                <!-- ДРУГИЕ ГРУППЫ -->
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-black mb-1.5 uppercase tracking-wider flex items-center justify-between" style="color: var(--primary-dark);">
+                        <span>ДРУГИЕ ГРУППЫ</span>
+                        <span id="donorGroupsCount" class="text-[9px] font-normal bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full" style="display: none;">0</span>
+                    </label>
                     <div class="filter-groups-container">
                         <div id="donorGroupsList"></div>
                     </div>
-                    <div id="donorGroupsTags" class="selected-tags mt-3"></div>
+                    <div id="donorGroupsTags" class="selected-tags"></div>
                     <select id="donorGroups" multiple style="display: none;"></select>
-            </div>
-                <div class="lg:col-span-2 grid grid-cols-2 gap-4">
-                    <input type="text" id="fName" placeholder="Поиск врача..." class="filter-input" list="datalistDoctors" autocomplete="off">
-                    <datalist id="datalistDoctors"></datalist>
-                    <input type="text" id="fSpec" placeholder="Специальность..." class="filter-input" list="datalistSpecs" autocomplete="off">
-                    <datalist id="datalistSpecs"></datalist>
-                    <input type="text" id="fLPU" placeholder="Учреждение..." class="filter-input" list="datalistLPU" autocomplete="off">
-                    <datalist id="datalistLPU"></datalist>
-                    <input type="text" id="fReg" placeholder="Регион..." class="filter-input" list="datalistRegions" autocomplete="off">
-                    <datalist id="datalistRegions"></datalist>
-                    <button onclick="processData()" class="col-span-2 btn-primary text-white font-bold py-4 rounded-2xl shadow-xl text-base relative overflow-hidden">
-                        <span class="relative z-10">ОБНОВИТЬ ВСЕ ДАННЫЕ</span>
+                </div>
+                
+                <!-- МЕДИЦИНСКИЙ ПРЕДСТАВИТЕЛЬ -->
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-black mb-1.5 uppercase tracking-wider flex items-center justify-between" style="color: var(--primary-dark);">
+                        <span>МЕДИЦИНСКИЙ ПРЕДСТАВИТЕЛЬ</span>
+                        <span id="medicalRepCount" class="text-[9px] font-normal bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full" style="display: none;">0</span>
+                    </label>
+                    <div class="filter-groups-container">
+                        <div id="medicalRepList"></div>
+                    </div>
+                    <div id="medicalRepTags" class="selected-tags"></div>
+                    <select id="medicalRep" multiple style="display: none;"></select>
+                </div>
+                
+                <!-- МЕСЯЦ -->
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-black mb-1.5 uppercase tracking-wider flex items-center justify-between" style="color: var(--primary-dark);">
+                        <span>МЕСЯЦ</span>
+                        <span id="monthCount" class="text-[9px] font-normal bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full" style="display: none;">0</span>
+                    </label>
+                    <div class="filter-groups-container">
+                        <div id="monthList"></div>
+                    </div>
+                    <div id="monthTags" class="selected-tags"></div>
+                    <select id="month" multiple style="display: none;"></select>
+                </div>
+                
+                <!-- Поисковые поля и кнопка -->
+                <div class="lg:col-span-4">
+                    <label class="block text-[10px] font-black mb-1.5 uppercase tracking-wider" style="color: var(--primary-dark);">ПОИСК И ДЕЙСТВИЯ</label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <input type="text" id="fName" placeholder="Врач..." class="filter-input" list="datalistDoctors" autocomplete="off">
+                        <datalist id="datalistDoctors"></datalist>
+                        <input type="text" id="fSpec" placeholder="Специальность..." class="filter-input" list="datalistSpecs" autocomplete="off">
+                        <datalist id="datalistSpecs"></datalist>
+                        <input type="text" id="fLPU" placeholder="Учреждение..." class="filter-input" list="datalistLPU" autocomplete="off">
+                        <datalist id="datalistLPU"></datalist>
+                        <input type="text" id="fReg" placeholder="Регион..." class="filter-input" list="datalistRegions" autocomplete="off">
+                        <datalist id="datalistRegions"></datalist>
+                    </div>
+                    <button onclick="processData()" class="w-full btn-primary text-white font-bold py-2.5 rounded-xl shadow-lg text-sm relative overflow-hidden">
+                        <span class="relative z-10">ОБНОВИТЬ ДАННЫЕ</span>
                     </button>
-            </div>
+                </div>
             </div>
         </div>
 
@@ -729,13 +1061,7 @@
             <!-- Tab 1: БДК -->
             <div id="tabBDC" class="tab-content active">
                 <!-- Statistics Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-                    <div class="header-card text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
-                        <div class="relative z-10">
-                            <p class="text-gray-300 text-xs font-medium mb-1">Статистика</p>
-                            <h2 class="text-xl font-black tracking-tight">Обзор данных</h2>
-                </div>
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                     <div class="stat-card p-5 rounded-3xl shadow-lg">
                         <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color: var(--primary-red);">БДК собственная</p>
                         <p class="text-[8px] font-medium mb-2 opacity-70" style="color: var(--primary-dark);">Врачи с которыми работает только первая группа</p>
@@ -762,6 +1088,8 @@
                                 <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="spec" onclick="sortBy('spec')">СПЕЦИАЛЬНОСТЬ ↑↓</th>
                                 <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="lpu" onclick="sortBy('lpu')">ЛПУ ↑↓</th>
                                 <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="region" onclick="sortBy('region')">ОБЛАСТЬ ↑↓</th>
+                                <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="medicalRep" onclick="sortBy('medicalRep')">МЕДИЦИНСКИЙ ПРЕДСТАВИТЕЛЬ ↑↓</th>
+                                <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="month" onclick="sortBy('month')">МЕСЯЦ ↑↓</th>
                                 <th class="p-4 text-center border-r border-gray-300">СТАТУС</th>
                                 <th class="p-4 text-left border-r border-gray-300">РАСПРЕДЕЛЕНИЕ ГРУПП</th>
                                 <th class="p-4 sort-header text-right border-r border-gray-300" data-sort="g1Sum" onclick="sortBy('g1Sum')">СУММА ГР №1 ↑↓</th>
@@ -770,7 +1098,7 @@
                         </thead>
                         <tbody id="resultTable" class="divide-y divide-gray-100 text-sm">
                             <tr id="loadingIndicator" style="display: none;">
-                                <td colspan="9" class="p-10 text-center">
+                                <td colspan="11" class="p-10 text-center">
                                     <div class="inline-block">
                                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
                                         <p class="text-sm font-medium" style="color: var(--primary-dark);">Загрузка данных...</p>
@@ -834,20 +1162,64 @@
             }
         }
 
+        // Select all groups
+        function selectAllGroups(type, checked) {
+            const select = document.getElementById(type);
+            
+            if (!select) return;
+            
+            // Выбираем/снимаем выбор со всех опций
+            Array.from(select.options).forEach(option => {
+                if (option.value && !option.disabled) {
+                    option.selected = checked;
+                }
+            });
+            
+            // Обновляем теги и состояние всех чекбоксов
+            updateFilterTags(type);
+        }
+
         // Update filter tags display
         function updateFilterTags(type) {
             const select = document.getElementById(type);
             const tagsContainer = document.getElementById(type + 'Tags');
             const list = document.getElementById(type + 'List');
-            const selected = Array.from(select.selectedOptions).map(o => o.value);
+            const countElement = document.getElementById(type + 'Count');
             
-            // Обновляем чекбоксы в списке
-            if (list) {
-                list.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    const groupName = checkbox.value;
-                    checkbox.checked = selected.includes(groupName);
-                });
+            if (!select || !list) return;
+            
+            const selected = Array.from(select.selectedOptions)
+                .map(o => o.value)
+                .filter(v => v);
+            const allOptions = Array.from(select.options)
+                .filter(o => o.value && !o.disabled);
+            
+            // Обновляем счетчик
+            if (countElement) {
+                if (selected.length > 0) {
+                    countElement.textContent = selected.length;
+                    countElement.style.display = 'inline-block';
+                } else {
+                    countElement.style.display = 'none';
+                }
             }
+            
+            // Обновляем чекбоксы в списке на основе состояния select
+            list.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                if (checkbox.value === 'select-all') {
+                    // Обновляем состояние "Выбрать все"
+                    const allSelected = allOptions.length > 0 && selected.length === allOptions.length;
+                    const someSelected = selected.length > 0 && selected.length < allOptions.length;
+                    checkbox.checked = allSelected;
+                    checkbox.indeterminate = someSelected && !allSelected;
+                } else {
+                    // Обновляем чекбокс группы на основе состояния select
+                    const option = Array.from(select.options).find(o => o.value === checkbox.value && !o.disabled);
+                    if (option) {
+                        checkbox.checked = option.selected || false;
+                    }
+                }
+            });
             
             // Обновляем теги
             if (tagsContainer) {
@@ -867,17 +1239,30 @@
         // Remove group from filter
         function removeFilterGroup(type, groupName) {
             const select = document.getElementById(type);
+            const list = document.getElementById(type + 'List');
             const option = Array.from(select.options).find(o => o.value === groupName);
             
             if (option) {
                 option.selected = false;
-                updateFilterTags(type);
             }
+            
+            // Обновляем соответствующий чекбокс
+            if (list) {
+                const checkbox = list.querySelector(`input[type="checkbox"][value="${groupName}"]`);
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
+            }
+            
+            updateFilterTags(type);
         }
 
         async function init() {
             // Показываем индикатор загрузки при первой загрузке данных
             const loadingIndicator = document.getElementById('loadingIndicator');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            // Оверлей загрузки уже виден при загрузке страницы, не нужно его показывать
             if (loadingIndicator) {
                 loadingIndicator.style.display = '';
             }
@@ -886,18 +1271,38 @@
                 const resp = await fetch(WEB_APP_URL);
                 rawData = await resp.json();
                 
+                // Небольшая задержка для плавного перехода
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Скрываем оверлей загрузки с анимацией
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
+                }
+                
                 // Скрываем индикатор после загрузки
                 if (loadingIndicator) {
                     loadingIndicator.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Ошибка загрузки данных:', error);
+                
+                // Скрываем оверлей загрузки даже при ошибке
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
+                }
+                
                 if (loadingIndicator) {
                     loadingIndicator.style.display = 'none';
                 }
                 const tbody = document.getElementById('resultTable');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="p-10 text-center text-red-600">Ошибка загрузки данных. Пожалуйста, обновите страницу.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="11" class="p-10 text-center text-red-600">Ошибка загрузки данных. Пожалуйста, обновите страницу.</td></tr>';
                 }
                 return;
             }
@@ -908,6 +1313,46 @@
             const donorGroupsList = document.getElementById('donorGroupsList');
             const mainGroupSelect = document.getElementById('mainGroup');
             const donorGroupsSelect = document.getElementById('donorGroups');
+            
+            // Создаем элемент "Выбрать все" для Группы 1
+            const selectAllItem1 = document.createElement('div');
+            selectAllItem1.className = 'filter-group-item select-all';
+            
+            const selectAllCheckbox1 = document.createElement('input');
+            selectAllCheckbox1.type = 'checkbox';
+            selectAllCheckbox1.value = 'select-all';
+            selectAllCheckbox1.id = 'main-select-all';
+            selectAllCheckbox1.onchange = (e) => {
+                selectAllGroups('mainGroup', e.target.checked);
+            };
+            
+            const selectAllLabel1 = document.createElement('label');
+            selectAllLabel1.htmlFor = selectAllCheckbox1.id;
+            selectAllLabel1.textContent = 'Выбрать все';
+            
+            selectAllItem1.appendChild(selectAllCheckbox1);
+            selectAllItem1.appendChild(selectAllLabel1);
+            mainGroupList.appendChild(selectAllItem1);
+            
+            // Создаем элемент "Выбрать все" для Других групп
+            const selectAllItem2 = document.createElement('div');
+            selectAllItem2.className = 'filter-group-item select-all';
+            
+            const selectAllCheckbox2 = document.createElement('input');
+            selectAllCheckbox2.type = 'checkbox';
+            selectAllCheckbox2.value = 'select-all';
+            selectAllCheckbox2.id = 'donor-select-all';
+            selectAllCheckbox2.onchange = (e) => {
+                selectAllGroups('donorGroups', e.target.checked);
+            };
+            
+            const selectAllLabel2 = document.createElement('label');
+            selectAllLabel2.htmlFor = selectAllCheckbox2.id;
+            selectAllLabel2.textContent = 'Выбрать все';
+            
+            selectAllItem2.appendChild(selectAllCheckbox2);
+            selectAllItem2.appendChild(selectAllLabel2);
+            donorGroupsList.appendChild(selectAllItem2);
             
             // Создаем элементы списка для каждой группы
             allGroups.forEach(group => {
@@ -927,8 +1372,8 @@
                     const option = Array.from(mainGroupSelect.options).find(o => o.value === group);
                     if (option) {
                         option.selected = checkbox1.checked;
-                        updateFilterTags('mainGroup');
                     }
+                    updateFilterTags('mainGroup');
                 };
                 
                 const label1 = document.createElement('label');
@@ -951,8 +1396,8 @@
                     const option = Array.from(donorGroupsSelect.options).find(o => o.value === group);
                     if (option) {
                         option.selected = checkbox2.checked;
-                        updateFilterTags('donorGroups');
                     }
+                    updateFilterTags('donorGroups');
                 };
                 
                 const label2 = document.createElement('label');
@@ -974,6 +1419,137 @@
                 }
                 updateFilterTags('mainGroup');
             }
+
+            // Инициализация фильтров для медицинского представителя (столбец E)
+            const medicalRepList = document.getElementById('medicalRepList');
+            const medicalRepSelect = document.getElementById('medicalRep');
+            
+            // Получаем уникальные значения медицинских представителей из столбца E
+            // Пробуем разные варианты названий столбца E
+            const uniqueMedicalReps = [...new Set(rawData.map(r => {
+                return r['E'] || r['Медицинский представитель'] || r['МП'] || r['Медицинский представитель (E)'] || '';
+            }).filter(mr => mr))].sort();
+            
+            // Создаем элемент "Выбрать все" для медицинского представителя
+            const selectAllItemMR = document.createElement('div');
+            selectAllItemMR.className = 'filter-group-item select-all';
+            
+            const selectAllCheckboxMR = document.createElement('input');
+            selectAllCheckboxMR.type = 'checkbox';
+            selectAllCheckboxMR.value = 'select-all';
+            selectAllCheckboxMR.id = 'medical-rep-select-all';
+            selectAllCheckboxMR.onchange = (e) => {
+                selectAllGroups('medicalRep', e.target.checked);
+            };
+            
+            const selectAllLabelMR = document.createElement('label');
+            selectAllLabelMR.htmlFor = selectAllCheckboxMR.id;
+            selectAllLabelMR.textContent = 'Выбрать все';
+            
+            selectAllItemMR.appendChild(selectAllCheckboxMR);
+            selectAllItemMR.appendChild(selectAllLabelMR);
+            medicalRepList.appendChild(selectAllItemMR);
+            
+            // Создаем элементы списка для каждого медицинского представителя
+            uniqueMedicalReps.forEach(mr => {
+                medicalRepSelect.add(new Option(mr, mr));
+                
+                const item = document.createElement('div');
+                item.className = 'filter-group-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = mr;
+                checkbox.id = 'medical-rep-' + mr.replace(/[^a-zA-Z0-9]/g, '_');
+                checkbox.onchange = () => {
+                    const option = Array.from(medicalRepSelect.options).find(o => o.value === mr);
+                    if (option) {
+                        option.selected = checkbox.checked;
+                    }
+                    updateFilterTags('medicalRep');
+                };
+                
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = mr;
+                
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                medicalRepList.appendChild(item);
+            });
+            
+            // Инициализация фильтров для месяца (столбец B)
+            const monthList = document.getElementById('monthList');
+            const monthSelect = document.getElementById('month');
+            
+            // Получаем уникальные значения месяцев из столбца B (row['Месяц'])
+            const uniqueMonths = [...new Set(rawData.map(r => {
+                return r['Месяц'] || r['B'] || '';
+            }).filter(m => m))].sort((a, b) => {
+                // Сортируем месяца в правильном порядке (Январь 2025, Февраль 2025, и т.д.)
+                const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                const getMonthIndex = (str) => {
+                    for (let i = 0; i < months.length; i++) {
+                        if (str.includes(months[i])) return i;
+                    }
+                    return 12;
+                };
+                const monthIndexA = getMonthIndex(a);
+                const monthIndexB = getMonthIndex(b);
+                if (monthIndexA !== monthIndexB) return monthIndexA - monthIndexB;
+                // Если месяц одинаковый, сортируем по году
+                const yearA = parseInt(a.match(/\d{4}/)?.[0] || '0');
+                const yearB = parseInt(b.match(/\d{4}/)?.[0] || '0');
+                return yearA - yearB;
+            });
+            
+            // Создаем элемент "Выбрать все" для месяца
+            const selectAllItemMonth = document.createElement('div');
+            selectAllItemMonth.className = 'filter-group-item select-all';
+            
+            const selectAllCheckboxMonth = document.createElement('input');
+            selectAllCheckboxMonth.type = 'checkbox';
+            selectAllCheckboxMonth.value = 'select-all';
+            selectAllCheckboxMonth.id = 'month-select-all';
+            selectAllCheckboxMonth.onchange = (e) => {
+                selectAllGroups('month', e.target.checked);
+            };
+            
+            const selectAllLabelMonth = document.createElement('label');
+            selectAllLabelMonth.htmlFor = selectAllCheckboxMonth.id;
+            selectAllLabelMonth.textContent = 'Выбрать все';
+            
+            selectAllItemMonth.appendChild(selectAllCheckboxMonth);
+            selectAllItemMonth.appendChild(selectAllLabelMonth);
+            monthList.appendChild(selectAllItemMonth);
+            
+            // Создаем элементы списка для каждого месяца
+            uniqueMonths.forEach(month => {
+                monthSelect.add(new Option(month, month));
+                
+                const item = document.createElement('div');
+                item.className = 'filter-group-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = month;
+                checkbox.id = 'month-' + month.replace(/[^a-zA-Z0-9]/g, '_');
+                checkbox.onchange = () => {
+                    const option = Array.from(monthSelect.options).find(o => o.value === month);
+                    if (option) {
+                        option.selected = checkbox.checked;
+                    }
+                    updateFilterTags('month');
+                };
+                
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = month;
+                
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                monthList.appendChild(item);
+            });
 
             // Заполняем datalist для автокомплита
             const datalistDoctors = document.getElementById('datalistDoctors');
@@ -1025,14 +1601,23 @@
                 existingRows.forEach(row => row.remove());
             }
 
-            const g1 = Array.from(document.getElementById('mainGroup').selectedOptions).map(o => o.value);
-            const g2 = Array.from(document.getElementById('donorGroups').selectedOptions).map(o => o.value);
+            const g1 = Array.from(document.getElementById('mainGroup').selectedOptions)
+                .map(o => o.value)
+                .filter(v => v);
+            const g2 = Array.from(document.getElementById('donorGroups').selectedOptions)
+                .map(o => o.value)
+                .filter(v => v);
             const filtered = {};
             const statsGroups = {};
 
             rawData.forEach(row => {
-                const name = row['Клиент'], group = row['Группа'], month = row['Месяц'];
+                const name = row['Клиент'], group = row['Группа'];
+                // Получаем месяц (столбец B) - пробуем разные варианты названий
+                const month = row['Месяц'] || row['B'] || '';
                 const sum = parseFloat(String(row['Фактическая сумма выдачи']).replace(',', '.')) || 0;
+                
+                // Получаем значения для медицинского представителя (столбец E)
+                const medicalRep = row['E'] || row['Медицинский представитель'] || row['МП'] || row['Медицинский представитель (E)'] || '';
                 
                 if(document.getElementById('fName').value && !name.toLowerCase().includes(document.getElementById('fName').value.toLowerCase())) return;
                 if(document.getElementById('fSpec').value && !String(row['Специальность']).toLowerCase().includes(document.getElementById('fSpec').value.toLowerCase())) return;
@@ -1040,12 +1625,23 @@
                 if(document.getElementById('fLPU').value && !String(lpuNameValue).toLowerCase().includes(document.getElementById('fLPU').value.toLowerCase())) return;
                 const regionValue = row['H'] || row['Область'] || '';
                 if(document.getElementById('fReg').value && !String(regionValue).toLowerCase().includes(document.getElementById('fReg').value.toLowerCase())) return;
+                
+                // Фильтр по медицинскому представителю
+                const selectedMedicalReps = Array.from(document.getElementById('medicalRep').selectedOptions)
+                    .map(o => o.value)
+                    .filter(v => v);
+                if(selectedMedicalReps.length > 0 && !selectedMedicalReps.includes(medicalRep)) return;
+                
+                // Фильтр по месяцу
+                const selectedMonths = Array.from(document.getElementById('month').selectedOptions)
+                    .map(o => o.value)
+                    .filter(v => v);
+                if(selectedMonths.length > 0 && !selectedMonths.includes(month)) return;
 
                 if (!filtered[name]) {
                     const lpuName = row['K'] || row['НазваниеЛПУ'] || ''; // НазваниеЛПУ из столбца K
                     const lpuCode = row['L'] || row['Аб'] || ''; // Аб из столбца L
                     const region = row['H'] || row['Область'] || ''; // Область из столбца H
-                    const lpuDisplay = lpuCode ? `${lpuName} (${lpuCode})` : lpuName;
                     filtered[name] = { 
                         name, 
                         spec: row['Специальность'] || 'Не указано', 
@@ -1053,6 +1649,8 @@
                         lpuCode: lpuCode,
                         lpu: lpuCode ? `${lpuName} (${lpuCode})` : lpuName,
                         region: region || '',
+                        medicalReps: new Set(), // Множество уникальных медицинских представителей
+                        months: new Set(), // Множество уникальных месяцев
                         ourSum: 0,      // Сумма группы 1
                         otherSum: 0,    // Сумма группы 2 (остальные группы)
                         total: 0, 
@@ -1061,6 +1659,10 @@
                         groupSums: {} 
                     };
                 }
+                
+                // Добавляем медицинского представителя и месяц в множества для всех строк, прошедших фильтры
+                if (medicalRep) filtered[name].medicalReps.add(medicalRep);
+                if (month) filtered[name].months.add(month);
 
                 if (g1.includes(group) || g2.includes(group)) {
                     if (sum > 0) {
@@ -1366,6 +1968,20 @@
                     vB = (b.lpu || '').toLowerCase(); 
                     return vA.localeCompare(vB, 'ru') * currentSort.dir;
                 }
+                else if (currentSort.key === 'medicalRep') {
+                    const medicalRepsA = Array.from(a.medicalReps || new Set()).sort().join(', ') || '';
+                    const medicalRepsB = Array.from(b.medicalReps || new Set()).sort().join(', ') || '';
+                    vA = medicalRepsA.toLowerCase(); 
+                    vB = medicalRepsB.toLowerCase(); 
+                    return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                }
+                else if (currentSort.key === 'month') {
+                    const monthsA = Array.from(a.months || new Set()).sort().join(', ') || '';
+                    const monthsB = Array.from(b.months || new Set()).sort().join(', ') || '';
+                    vA = monthsA.toLowerCase(); 
+                    vB = monthsB.toLowerCase(); 
+                    return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                }
                 else { 
                     vA = (a[currentSort.key] || '').toLowerCase(); 
                     vB = (b[currentSort.key] || '').toLowerCase(); 
@@ -1401,6 +2017,37 @@
                 const avg1 = doc.history.filter(h => h.isG1).length;
                 const avg2 = doc.history.filter(h => !h.isG1).length;
                 
+                // Преобразуем Set в отсортированный массив для медицинских представителей
+                const medicalRepsArray = Array.from(doc.medicalReps || new Set()).sort();
+                const medicalRepsDisplay = medicalRepsArray.length > 0 
+                    ? (medicalRepsArray.length > 3 
+                        ? medicalRepsArray.slice(0, 3).join(', ') + ` +${medicalRepsArray.length - 3}`
+                        : medicalRepsArray.join(', '))
+                    : 'Не указано';
+                
+                // Преобразуем Set в отсортированный массив для месяцев
+                const monthsArray = Array.from(doc.months || new Set()).sort((a, b) => {
+                    // Сортируем месяца в правильном порядке
+                    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                    const getMonthIndex = (str) => {
+                        for (let i = 0; i < months.length; i++) {
+                            if (str.includes(months[i])) return i;
+                        }
+                        return 12;
+                    };
+                    const monthIndexA = getMonthIndex(a);
+                    const monthIndexB = getMonthIndex(b);
+                    if (monthIndexA !== monthIndexB) return monthIndexA - monthIndexB;
+                    const yearA = parseInt(a.match(/\d{4}/)?.[0] || '0');
+                    const yearB = parseInt(b.match(/\d{4}/)?.[0] || '0');
+                    return yearA - yearB;
+                });
+                const monthsDisplay = monthsArray.length > 0 
+                    ? (monthsArray.length > 3 
+                        ? monthsArray.slice(0, 3).join(', ') + ` +${monthsArray.length - 3}`
+                        : monthsArray.join(', '))
+                    : 'Не указано';
+                
                 const historyRows = doc.history.sort((a,b) => a.month > b.month ? 1 : -1).map(h => `
                     <div class="flex justify-between text-[11px] border-b py-1 ${h.isG1 ? 'text-red-600 font-bold' : ''}">
                         <span>${h.month} — ${h.group}</span>
@@ -1415,6 +2062,8 @@
                         <td class="p-3 border-r font-medium text-[#DF3B20]">${doc.spec}</td>
                         <td class="p-3 border-r text-gray-500 text-[10px]">${doc.lpu}</td>
                         <td class="p-3 border-r text-gray-500">${doc.region}</td>
+                        <td class="p-3 border-r text-gray-600 text-[11px]" title="${medicalRepsArray.join(', ')}">${medicalRepsDisplay}</td>
+                        <td class="p-3 border-r text-gray-600 text-[11px]" title="${monthsArray.join(', ')}">${monthsDisplay}</td>
                         <td class="p-3 text-center border-r">
                             <span class="status-tag ${doc.existsInOur ? 'status-exists' : 'status-missing'}">
                                 ${doc.existsInOur ? 'Гр 1 ✓' : 'НЕТ'}
@@ -1431,7 +2080,7 @@
                         </td>
                     </tr>
                     <tr class="details-row border-b">
-                        <td colspan="9" class="p-4 bg-gray-50">
+                        <td colspan="11" class="p-4 bg-gray-50">
                             <div class="bg-white p-3 rounded-lg shadow-inner max-w-md ml-12">
                                 <p class="text-[10px] font-bold uppercase mb-2 text-gray-400">История выдачи по месяцам:</p>
                                 ${historyRows}
@@ -1451,7 +2100,7 @@
                 
                 html += `
                     <tr class="table-footer">
-                        <td colspan="7" class="text-right border-r border-gray-300">
+                        <td colspan="9" class="text-right border-r border-gray-300">
                             <span class="total-label">ИТОГО:</span>
                             <span style="color: var(--primary-dark);">${count} врачей</span>
                         </td>
@@ -1465,7 +2114,7 @@
                         </td>
                     </tr>
                     <tr class="table-footer">
-                        <td colspan="7" class="text-right border-r border-gray-300">
+                        <td colspan="9" class="text-right border-r border-gray-300">
                             <span class="total-label">СРЕДНЯЯ СУММА:</span>
                         </td>
                         <td class="text-right total-value border-r border-gray-300" style="color: var(--primary-red);">
