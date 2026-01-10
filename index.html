@@ -202,21 +202,18 @@
         }
 
         .sort-header::after {
-            content: ' ↕';
+            content: '';
             font-size: 0.9em;
-            opacity: 0.5;
             margin-left: 4px;
         }
 
         .sort-header.sort-asc::after {
             content: ' ↑';
-            opacity: 1;
             color: var(--primary-red);
         }
 
         .sort-header.sort-desc::after {
             content: ' ↓';
-            opacity: 1;
             color: var(--primary-red);
         }
 
@@ -759,16 +756,16 @@
                 <div class="table-container fade-in">
             <table class="min-w-full">
                         <thead class="table-header">
-                            <tr class="text-[11px] font-black uppercase tracking-widest" style="color: var(--primary-dark);">
-                                <th class="p-5 text-center border-r border-gray-300 w-16">№</th>
-                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="name" onclick="sortBy('name')">ФИО ВРАЧА</th>
-                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="spec" onclick="sortBy('spec')">СПЕЦИАЛЬНОСТЬ</th>
-                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="lpu" onclick="sortBy('lpu')">ЛПУ</th>
-                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="region" onclick="sortBy('region')">ОБЛАСТЬ</th>
-                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="status" onclick="sortBy('status')">СТАТУС</th>
-                                <th class="p-5 text-center border-r border-gray-300">РАСПРЕДЕЛЕНИЕ ГРУПП</th>
-                                <th class="p-5 sort-header text-center border-r border-gray-300" data-sort="g1Sum" onclick="sortBy('g1Sum')">СУММА ГРУППЫ №1</th>
-                                <th class="p-5 sort-header text-center" data-sort="g2Sum" onclick="sortBy('g2Sum')">СУММА ГРУППЫ №2</th>
+                            <tr class="text-[10px] font-bold uppercase" style="color: var(--primary-dark);">
+                                <th class="p-4 text-center border-r border-gray-300 w-12">№</th>
+                                <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="name" onclick="sortBy('name')">ФИО ВРАЧА ↑↓</th>
+                                <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="spec" onclick="sortBy('spec')">СПЕЦИАЛЬНОСТЬ ↑↓</th>
+                                <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="lpu" onclick="sortBy('lpu')">ЛПУ ↑↓</th>
+                                <th class="p-4 sort-header text-left border-r border-gray-300" data-sort="region" onclick="sortBy('region')">ОБЛАСТЬ ↑↓</th>
+                                <th class="p-4 text-center border-r border-gray-300">СТАТУС</th>
+                                <th class="p-4 text-left border-r border-gray-300">РАСПРЕДЕЛЕНИЕ ГРУПП</th>
+                                <th class="p-4 sort-header text-right border-r border-gray-300" data-sort="g1Sum" onclick="sortBy('g1Sum')">СУММА ГР №1 ↑↓</th>
+                                <th class="p-4 sort-header text-right" data-sort="g2Sum" onclick="sortBy('g2Sum')">СУММА ГР №2 ↑↓</th>
                     </tr>
                         </thead>
                         <tbody id="resultTable" class="divide-y divide-gray-100 text-sm">
@@ -1349,53 +1346,42 @@
         }
 
 
+        const formatNum = (n) => Math.round(n).toLocaleString('ru-RU');
+
         function render() {
             const tbody = document.getElementById('resultTable');
             
             // Сортируем данные в зависимости от выбранного столбца
             const sorted = [...analyzedData].sort((a, b) => {
                 let vA, vB;
-                
-                switch(currentSort.key) {
-                    case 'name':
-                        vA = (a.name || '').toLowerCase();
-                        vB = (b.name || '').toLowerCase();
-                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
-                    case 'spec':
-                        vA = (a.spec || '').toLowerCase();
-                        vB = (b.spec || '').toLowerCase();
-                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
-                    case 'lpu':
-                        vA = (a.lpuName || '').toLowerCase();
-                        vB = (b.lpuName || '').toLowerCase();
-                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
-                    case 'region':
-                        vA = (a.region || '').toLowerCase();
-                        vB = (b.region || '').toLowerCase();
-                        return vA.localeCompare(vB, 'ru') * currentSort.dir;
-                    case 'status':
-                        vA = a.existsInOur ? 1 : 0;
-                        vB = b.existsInOur ? 1 : 0;
-                        return (vA - vB) * currentSort.dir;
-                    case 'g1Sum':
-                        vA = a.ourSum || 0;
-                        vB = b.ourSum || 0;
-                        return (vA - vB) * currentSort.dir;
-                    case 'g2Sum':
-                        vA = a.otherSum || 0;
-                        vB = b.otherSum || 0;
-                        return (vA - vB) * currentSort.dir;
-                    default:
-                        return 0;
+                if (currentSort.key === 'g1Sum') { vA = a.ourSum; vB = b.ourSum; }
+                else if (currentSort.key === 'g2Sum') { vA = a.otherSum; vB = b.otherSum; }
+                else if (currentSort.key === 'status') { 
+                    vA = a.existsInOur ? 1 : 0; 
+                    vB = b.existsInOur ? 1 : 0;
+                    return (vA - vB) * currentSort.dir;
                 }
+                else if (currentSort.key === 'lpu') {
+                    vA = (a.lpu || '').toLowerCase(); 
+                    vB = (b.lpu || '').toLowerCase(); 
+                    return vA.localeCompare(vB, 'ru') * currentSort.dir;
+                }
+                else { 
+                    vA = (a[currentSort.key] || '').toLowerCase(); 
+                    vB = (b[currentSort.key] || '').toLowerCase(); 
+                    return vA.localeCompare(vB, 'ru') * currentSort.dir; 
+                }
+                return (vA - vB) * currentSort.dir;
             });
             
-            // Обновляем визуальные индикаторы сортировки в заголовках
+            // Выделяем активный столбец сортировки
             document.querySelectorAll('.sort-header').forEach(th => {
-                th.classList.remove('sort-asc', 'sort-desc');
+                th.style.color = '';
+                th.style.fontWeight = '';
                 const sortKey = th.getAttribute('data-sort');
                 if (sortKey === currentSort.key) {
-                    th.classList.add(currentSort.dir === 1 ? 'sort-asc' : 'sort-desc');
+                    th.style.color = 'var(--primary-red)';
+                    th.style.fontWeight = '900';
                 }
             });
 
@@ -1407,66 +1393,49 @@
             const avgG2Sum = count > 0 ? totalG2Sum / count : 0;
 
             let html = sorted.map((doc, i) => {
-                const historyRows = doc.history.sort((a,b)=>a.month>b.month?1:-1).map(h => `
-                    <tr class="${h.isG1 ? 'bg-red-50' : ''} border-b border-gray-100">
-                        <td class="p-3 pl-8">${h.month}</td>
-                        <td class="p-3 font-bold ${h.isG1 ? 'text-red-600' : ''}" style="${h.isG1 ? 'color: var(--primary-red);' : ''}">${h.group}</td>
-                        <td class="p-3 text-right font-semibold">${h.sum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</td>
-                    </tr>`).join('');
+                const pills = Object.entries(doc.groupSums)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([g, s]) => `<span class="group-pill"><b>${g}:</b> ${formatNum(s)}</span>`)
+                    .join('');
 
-                // Вычисляем средние суммы
-                const g1MonthCount = doc.history.filter(h => h.isG1).length;
-                const g2MonthCount = doc.history.filter(h => !h.isG1).length;
-                const avgG1SumRow = g1MonthCount > 0 ? doc.ourSum / g1MonthCount : 0;
-                const avgG2SumRow = g2MonthCount > 0 ? doc.otherSum / g2MonthCount : 0;
-
-                // Правильный порядок столбцов: №, ФИО, Специальность, ЛПУ, Область, Статус, Распределение, Гр1, Гр2
-                // Исправленный вариант для точного соответствия макету
-                const lpuDisplay = doc.lpuCode ? `${doc.lpuName || ''} (${doc.lpuCode})` : (doc.lpuName || '');
+                const avg1 = doc.history.filter(h => h.isG1).length;
+                const avg2 = doc.history.filter(h => !h.isG1).length;
                 
+                const historyRows = doc.history.sort((a,b) => a.month > b.month ? 1 : -1).map(h => `
+                    <div class="flex justify-between text-[11px] border-b py-1 ${h.isG1 ? 'text-red-600 font-bold' : ''}">
+                        <span>${h.month} — ${h.group}</span>
+                        <span>${formatNum(h.sum)}</span>
+                    </div>
+                `).join('');
+
                 return `
-                    <tr class="table-row cursor-pointer" onclick="document.getElementById('det-${i}').classList.toggle('open')">
-                        <td class="p-5 text-center border-r border-gray-300 font-medium" style="color: var(--primary-dark);">${i + 1}</td>
-                        <td class="p-5 text-left border-r border-gray-300">
-                            <div class="font-bold text-base" style="color: var(--primary-dark);">${doc.name || ''}</div>
-                        </td>
-                        <td class="p-5 text-left border-r border-gray-300">
-                            <div class="text-sm font-medium" style="color: var(--primary-red);">${doc.spec || 'Не указано'}</div>
-                        </td>
-                        <td class="p-5 text-left text-xs font-medium border-r border-gray-300" style="color: var(--primary-dark);">${lpuDisplay}</td>
-                        <td class="p-5 text-left text-xs font-medium border-r border-gray-300" style="color: var(--primary-dark);">${doc.region || ''}</td>
-                        <td class="p-5 text-center border-r border-gray-300">
+                    <tr class="hover:bg-gray-50 cursor-pointer text-[12px]" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <td class="p-3 text-center border-r text-gray-400">${i + 1}</td>
+                        <td class="p-3 font-bold border-r">${doc.name}</td>
+                        <td class="p-3 border-r font-medium text-[#DF3B20]">${doc.spec}</td>
+                        <td class="p-3 border-r text-gray-500 text-[10px]">${doc.lpu}</td>
+                        <td class="p-3 border-r text-gray-500">${doc.region}</td>
+                        <td class="p-3 text-center border-r">
                             <span class="status-tag ${doc.existsInOur ? 'status-exists' : 'status-missing'}">
                                 ${doc.existsInOur ? 'Гр 1 ✓' : 'НЕТ'}
                             </span>
                         </td>
-                        <td class="p-5 text-left w-64 border-r border-gray-300" style="white-space: normal; line-height: 1.6;">
-                            ${Object.entries(doc.groupSums)
-                                .sort((a, b) => b[1] - a[1])
-                                .map(([g, s]) => `<span class="group-pill"><b>${g}:</b> ${s.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</span>`)
-                                .join(' ')}
+                        <td class="p-3 border-r" style="max-width:250px">${pills}</td>
+                        <td class="p-3 text-right border-r">
+                            <div class="font-black text-sm text-[#DF3B20]">${formatNum(doc.ourSum)}</div>
+                            ${avg1 ? `<div class="text-[9px] text-red-300">(${formatNum(doc.ourSum/avg1)})</div>` : ''}
                         </td>
-                        <td class="p-5 text-right border-r border-gray-300">
-                            <div class="font-black text-lg" style="color: var(--primary-red);">${doc.ourSum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</div>
-                            ${g1MonthCount > 0 ? `<div class="text-[10px] mt-1 text-right font-medium" style="color: var(--primary-red); opacity: 0.7;">(${Math.round(avgG1SumRow).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')})</div>` : ''}
-                        </td>
-                        <td class="p-5 text-right">
-                            <div class="font-black text-lg" style="color: var(--primary-dark);">${doc.otherSum.toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')}</div>
-                            ${g2MonthCount > 0 && doc.otherSum > 0 ? `<div class="text-[10px] mt-1 text-right font-medium" style="color: #666; opacity: 0.8;">(${Math.round(avgG2SumRow).toLocaleString('ru-RU', {useGrouping: true}).replace(/,/g, ' ')})</div>` : ''}
+                        <td class="p-3 text-right">
+                            <div class="font-black text-sm text-[#424B52]">${formatNum(doc.otherSum)}</div>
+                            ${avg2 ? `<div class="text-[9px] text-gray-400">(${formatNum(doc.otherSum/avg2)})</div>` : ''}
                         </td>
                     </tr>
-                    <tr id="det-${i}" class="details-row bg-gray-50">
-                        <td colspan="9" class="p-6 px-12">
-                            <table class="w-full max-w-lg bg-white rounded-xl shadow-md border-2 border-gray-100 text-xs overflow-hidden">
-                                <thead class="font-bold uppercase" style="background: linear-gradient(135deg, var(--dark-lighter), #ffffff);">
-                                    <tr>
-                                        <th class="p-3 text-left">Месяц</th>
-                                        <th class="p-3 text-left">Группа</th>
-                                        <th class="p-3 text-right">Сумма</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${historyRows}</tbody>
-                            </table>
+                    <tr class="details-row border-b">
+                        <td colspan="9" class="p-4 bg-gray-50">
+                            <div class="bg-white p-3 rounded-lg shadow-inner max-w-md ml-12">
+                                <p class="text-[10px] font-bold uppercase mb-2 text-gray-400">История выдачи по месяцам:</p>
+                                ${historyRows}
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1518,18 +1487,13 @@
             tbody.innerHTML = html;
         }
 
-        function sortBy(key) { 
-            if (currentSort.key === key) {
-                // Переключаем направление, если кликнули на тот же столбец
-                currentSort.dir *= -1;
-            } else {
-                // Устанавливаем направление по умолчанию для нового столбца
-                // Для числовых столбцов сортируем по убыванию, для текстовых - по возрастанию
-                const numericKeys = ['g1Sum', 'g2Sum', 'status'];
-                currentSort.dir = numericKeys.includes(key) ? -1 : 1;
+        function sortBy(key) {
+            if (currentSort.key === key) currentSort.dir *= -1;
+            else {
+                currentSort.key = key;
+                currentSort.dir = (key.includes('Sum')) ? -1 : 1;
             }
-            currentSort.key = key; 
-            render(); 
+            render();
         }
         
         init();
