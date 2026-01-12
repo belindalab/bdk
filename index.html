@@ -560,9 +560,9 @@
         }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
             margin-top: 20px;
         }
 
@@ -573,6 +573,8 @@
             border-radius: 16px;
             padding: 20px;
             transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .stats-card:hover {
@@ -2544,56 +2546,6 @@
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${spec.coverage}%"></div>
-                    </div>
-                `;
-            });
-
-            html += `</div></div>`;
-
-            // Статистика по медицинским представителям (Топ 10 МП по количеству базы врачей)
-            const medicalRepStats = {};
-            rawData.forEach(row => {
-                const medicalRep = row['E'] || row['Медицинский представитель'] || row['МП'] || row['Медицинский представитель (E)'] || '';
-                const doctorName = row['Клиент'];
-                if (medicalRep && doctorName) {
-                    if (!medicalRepStats[medicalRep]) {
-                        medicalRepStats[medicalRep] = new Set();
-                    }
-                    medicalRepStats[medicalRep].add(doctorName);
-                }
-            });
-
-            const topMedicalReps = Object.entries(medicalRepStats)
-                .map(([rep, doctors]) => ({
-                    name: rep,
-                    doctorCount: doctors.size
-                }))
-                .sort((a, b) => b.doctorCount - a.doctorCount)
-                .slice(0, 10);
-
-            // Карточка Топ 10 МП
-            html += `
-                <div class="stats-card">
-                    <h3 class="text-base font-black mb-4 uppercase tracking-wide" style="color: var(--primary-dark);">Топ 10 МП по базе врачей</h3>
-                    <div class="text-sm text-gray-600 mb-4">Медицинские представители с наибольшим количеством врачей в базе</div>
-                    <div style="max-height: 500px; overflow-y: auto;">
-            `;
-
-            topMedicalReps.forEach((rep, index) => {
-                const medalClass = index < 3 ? `top-${index + 1}` : '';
-                html += `
-                    <div class="top-doctor-item" style="padding: 10px 0;">
-                        <span class="top-doctor-rank ${medalClass}">${index + 1}</span>
-                        <div class="top-doctor-info">
-                            <div class="top-doctor-name">${rep.name}</div>
-                        </div>
-                        <div class="top-doctor-value" style="font-size: 1.1rem;">
-                            ${rep.doctorCount}
-                            <div class="text-xs text-gray-500" style="font-weight: normal; font-size: 0.7rem; margin-top: 2px;">врачей</div>
-                        </div>
-                    </div>
-                    <div class="progress-bar mb-2" style="margin: 0 40px 8px 0;">
-                        <div class="progress-fill" style="width: ${topMedicalReps.length > 0 && topMedicalReps[0].doctorCount > 0 ? (rep.doctorCount / topMedicalReps[0].doctorCount * 100) : 0}%"></div>
                     </div>
                 `;
             });
