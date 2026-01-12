@@ -1730,7 +1730,60 @@
                     throw new Error('Массив данных пуст. Проверьте настройки Google Apps Script.');
                 }
                 
-                rawData = data;
+                // Предобработка данных: нормализуем числовые значения
+                rawData = data.map(row => {
+                    if (!row || typeof row !== 'object') return row;
+                    
+                    // Ищем столбец с фактической суммой выдачи
+                    const sumKeys = Object.keys(row).filter(k => 
+                        k && (
+                            k.toLowerCase().includes('фактическая') || 
+                            (k.toLowerCase().includes('сумма') && k.toLowerCase().includes('выдачи')) ||
+                            k === 'R' ||
+                            k === 'Фактическая сумма выдачи'
+                        )
+                    );
+                    
+                    // Нормализуем значение суммы для каждого найденного столбца
+                    sumKeys.forEach(key => {
+                        const originalValue = row[key];
+                        if (originalValue !== null && originalValue !== undefined && originalValue !== '') {
+                            // Если значение уже число, но может быть неправильно преобразовано
+                            // (например, 50000 вместо 500.00), оставляем как есть
+                            // Если это строка, парсим её
+                            if (typeof originalValue === 'string') {
+                                const parsed = parseNumber(originalValue);
+                                // Сохраняем как строку с правильным форматом для отображения
+                                // но также сохраняем числовое значение
+                                row[key] = originalValue; // Оставляем оригинальную строку для парсинга
+                            }
+                        }
+                    });
+                    
+                    return row;
+                });
+                
+                // Отладочное логирование первой строки данных
+                if (rawData.length > 0) {
+                    console.log('Первая строка данных (после обработки):', rawData[0]);
+                    console.log('Ключи первой строки:', Object.keys(rawData[0]));
+                    const sumKey = Object.keys(rawData[0]).find(k => 
+                        k && (
+                            k.toLowerCase().includes('фактическая') || 
+                            (k.toLowerCase().includes('сумма') && k.toLowerCase().includes('выдачи')) ||
+                            k === 'R'
+                        )
+                    );
+                    if (sumKey) {
+                        const value = rawData[0][sumKey];
+                        console.log('Найден столбец суммы:', sumKey);
+                        console.log('  - Значение:', value);
+                        console.log('  - Тип:', typeof value);
+                        console.log('  - После parseNumber:', parseNumber(value));
+                    } else {
+                        console.warn('Столбец с суммой не найден! Доступные ключи:', Object.keys(rawData[0]));
+                    }
+                }
                 
                 // Небольшая задержка для плавного перехода
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -2185,7 +2238,25 @@
                 
                 // Получаем месяц (столбец B) - пробуем разные варианты названий
                 const month = row['Месяц'] || row['B'] || '';
-                const sum = parseFloat(String(row['Фактическая сумма выдачи'] || '0').replace(',', '.')) || 0;
+                
+                // Пробуем разные варианты названий столбца с суммой
+                const sumValue = row['Фактическая сумма выдачи'] || 
+                                row['R'] || 
+                                row['Фактическаясуммавыдачи'] ||
+                                row['Фактическая сумма выдачи '] ||
+                                row[' Фактическая сумма выдачи'] ||
+                                '';
+                const sum = parseNumber(sumValue);
+                
+                // Отладочное логирование (можно убрать после проверки)
+                if (sum === 0 && sumValue && String(sumValue).trim() !== '') {
+                    console.log('Проблема с парсингом числа:', {
+                        исходноеЗначение: sumValue,
+                        тип: typeof sumValue,
+                        послеПарсинга: sum,
+                        ключиСтроки: Object.keys(row)
+                    });
+                }
                 
                 // Получаем значения для медицинского представителя (столбец E)
                 const medicalRep = row['E'] || row['Медицинский представитель'] || row['МП'] || row['Медицинский представитель (E)'] || '';
@@ -2262,6 +2333,15 @@
                         }
                         filtered[name].total += sum;
                         statsGroups[group] = (statsGroups[group] || 0) + sum;
+                    } else if (sumValue && String(sumValue).trim() !== '' && String(sumValue).trim() !== '0') {
+                        // Логируем случаи, когда есть значение, но оно парсится как 0
+                        console.warn('Значение суммы не распознано как число:', {
+                            исходное: sumValue,
+                            тип: typeof sumValue,
+                            послеПарсинга: sum,
+                            имя: name,
+                            группа: group
+                        });
                     }
                 }
             });
@@ -2703,6 +2783,67 @@
             }, 100);
         }
 
+
+        // Функция для корректного парсинга чисел с запятой как десятичным разделителем
+        const parseNumber = (value) => {
+            // Обрабатываем null, undefined, пустую строку
+            if (value === null || value === undefined || value === '') return 0;
+            
+            // Если уже число, возвращаем его (проверяем на NaN)
+            if (typeof value === 'number') {
+                // Если число очень большое (возможно, неправильно интерпретировано)
+                // Например, 50000 вместо 500.00, но это сложно определить автоматически
+                // Поэтому просто возвращаем число как есть
+                return isNaN(value) || !isFinite(value) ? 0 : value;
+            }
+            
+            // Преобразуем в строку
+            let str = String(value);
+            
+            // Убираем все пробелы (могут быть разделители тысяч)
+            str = str.replace(/\s+/g, '');
+            
+            // Убираем неразрывные пробелы и другие невидимые символы
+            str = str.replace(/\u00A0/g, '').replace(/\u2009/g, '');
+            
+            // Если пустая строка после очистки, возвращаем 0
+            if (str === '' || str === '-' || str === '+') return 0;
+            
+            // Убираем знак минус/плюс в начале (сохраним для результата)
+            const isNegative = str.startsWith('-');
+            if (str.startsWith('-') || str.startsWith('+')) {
+                str = str.substring(1);
+            }
+            
+            // Определяем позиции последней запятой и последней точки
+            const lastComma = str.lastIndexOf(',');
+            const lastDot = str.lastIndexOf('.');
+            
+            if (lastComma > lastDot) {
+                // Запятая - десятичный разделитель (европейский формат)
+                // Убираем все точки (разделители тысяч) и заменяем запятую на точку
+                str = str.replace(/\./g, '').replace(',', '.');
+            } else if (lastDot > lastComma) {
+                // Точка - десятичный разделитель (американский формат)
+                // Убираем все запятые (разделители тысяч)
+                str = str.replace(/,/g, '');
+            } else if (lastComma !== -1 && lastDot === -1) {
+                // Только запятая - это десятичный разделитель
+                str = str.replace(',', '.');
+            }
+            // Если нет ни запятой, ни точки - оставляем как есть (целое число)
+            
+            // Парсим число
+            const num = parseFloat(str);
+            
+            // Проверяем результат
+            if (isNaN(num) || !isFinite(num)) {
+                return 0;
+            }
+            
+            // Возвращаем с учетом знака
+            return isNegative ? -num : num;
+        };
 
         const formatNum = (n) => Math.round(n).toLocaleString('ru-RU');
 
